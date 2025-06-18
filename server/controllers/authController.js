@@ -1,9 +1,11 @@
 import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import sendEmail from "../utils/sendEmail.js";
 
-// Register a new user
+// @desc    Register a new user
+// @route   POST /api/auth/register
+// @access  Public
 export const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -25,7 +27,9 @@ export const registerUser = async (req, res) => {
     }
 };
 
-// Login a user
+// @desc    Login a user
+// @route   POST /api/auth/login
+// @access  Public
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
@@ -47,29 +51,18 @@ export const loginUser = async (req, res) => {
     }
 };
 
-// Google authentication
-export const googleAuth = async (req, res) => {
-    const { name, email, googleId } = req.body;
-
-    try {
-        let user = await User.findOne({ email });
-        if (!user) {
-            user = await User.create({ name, email, googleId });
-        }
-        res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
+// @desc    Google auth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+export const googleAuthCallback = (req, res) => {
+    const user = req.user;
+    const token = generateToken(user._id);
+    res.redirect(`${process.env.CLIENT_URL}/login/success?token=${token}`);
 };
 
-// Forgot password
-
+// @desc    Forgot password
+// @route   POST /api/auth/forgotpassword
+// @access  Public
 export const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user){
@@ -77,7 +70,7 @@ export const forgotPassword = async (req, res) => {
     }
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
-    const resetUrl = `${process.env.CLIENT_URL}/resetpassword/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
     const message = `Hello ${user.name},\n\nYou requested a password reset. Please click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.\n\nThank you!`;
 
     try {
@@ -96,5 +89,50 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-// Reset password
+// @desc    Reset password
+// @route   PUT /api/auth/resetpassword/:resettoken
+// @access  Public
+export const resetPassword = async (req, res) => {
+    try {
+        console.log('Incoming reset token from params:', req.params.resettoken);
+        const resetPasswordToken = crypto.createHash("sha256").update(req.params.resettoken).digest("hex");
+        console.log('Hashed token for DB search:', resetPasswordToken);
 
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() },
+        });
+        
+        console.log('User found for token:', user ? user.email : 'No user found');
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        user.password = req.body.password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            message: "Password has been reset successfully",
+            token: generateToken(user._id),
+        });
+        
+    } catch (error) {
+        console.error("Error in resetPassword controller:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+        
+    }
+};
+
+// @desc    Get current user's profile
+// @route   GET /api/auth/me
+// @access  Private
+export const getMe = (req, res) => {
+    res.status(200).json(req.user);
+};
