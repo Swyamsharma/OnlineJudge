@@ -8,14 +8,12 @@ import { Link } from 'react-router-dom';
 function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
-    const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
-    const { isError, message } = useSelector((state) => state.auth);
+    const { isError, isLoading, message } = useSelector((state) => state.auth);
 
     useEffect(() => {
         if (isError) {
             toast.error(message);
-            setLoading(false);
         }
         return () => {
             dispatch(reset());
@@ -25,10 +23,9 @@ function ForgotPasswordPage() {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
 
         try {
-            const resultAction = await dispatch(forgotPassword(email));
+            const resultAction = await dispatch(forgotPassword({ email }));
             if (forgotPassword.fulfilled.match(resultAction)) {
                 toast.success("If an account with that email exists, a reset link has been sent.");
                 setSubmitted(true);
@@ -37,20 +34,21 @@ function ForgotPasswordPage() {
             }
         } catch (err) {
             toast.error('An unexpected error occurred.');
-        } finally {
-            setLoading(false);
         }
     };
 
-    if (loading) return <Loader />;
+    if (isLoading) return <Loader />;
+
     if (submitted) {
         return (
-            <div className="text-center">
-                <h2 className="text-2xl font-bold">Request Sent</h2>
-                <p className="mt-4">Please check your email (and spam folder) for the reset link.</p>
-                <Link to="/login" className="mt-6 inline-block text-indigo-600 hover:text-indigo-500">
-                    Back to Login
-                </Link>
+            <div className="flex flex-col items-center justify-center min-h-full py-12 px-6 lg:px-8">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold">Request Sent</h2>
+                    <p className="mt-4">Please check your email (and spam folder) for the reset link.</p>
+                    <Link to="/login" className="mt-6 inline-block font-semibold text-indigo-600 hover:text-indigo-500">
+                        Back to Login
+                    </Link>
+                </div>
             </div>
         );
     }

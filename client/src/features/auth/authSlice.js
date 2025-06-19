@@ -51,7 +51,7 @@ export const logout = createAsyncThunk("auth/logout", async () => {
 // Async thunk for forgot password
 export const forgotPassword = createAsyncThunk(
     "auth/forgotPassword",
-    async (email, thunkAPI) => {
+    async ({email}, thunkAPI) => {
         try {
             return await authService.forgotPassword(email);
         } catch (error) {
@@ -70,7 +70,8 @@ export const resetPassword = createAsyncThunk(
     async (data, thunkAPI) => {
         try {
             return await authService.resetPassword(data);
-        } catch (error) {
+        } catch (error)
+        {
             const message =
                 (error.response && error.response.data && error.response.data.message) ||
                 error.message ||
@@ -105,11 +106,13 @@ export const authSlice = createSlice({
             .addCase(register.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                state.isError = false;
                 state.user = action.payload;
             })
             .addCase(register.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
                 state.user = null;
             })
@@ -119,11 +122,13 @@ export const authSlice = createSlice({
             .addCase(login.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                state.isError = false;
                 state.user = action.payload;
             })
             .addCase(login.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
                 state.user = null;
             })
@@ -133,14 +138,16 @@ export const authSlice = createSlice({
             .addCase(forgotPassword.pending, (state) => {
                 state.isLoading = true;
             })
-            .addCase(forgotPassword.fulfilled, (state) => {
+            .addCase(forgotPassword.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                state.isError = false;
                 state.message = action.payload.message;
             })
             .addCase(forgotPassword.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
             })
             .addCase(resetPassword.pending, (state) => {
@@ -149,12 +156,14 @@ export const authSlice = createSlice({
             .addCase(resetPassword.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.isSuccess = true;
+                state.isError = false;
                 state.message = action.payload.message;
-                state.user = action.payload; 
+                state.user = null; 
             })
             .addCase(resetPassword.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
+                state.isSuccess = false;
                 state.message = action.payload;
             });
     },

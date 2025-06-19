@@ -25,7 +25,7 @@ function RegisterPage() {
         if (isError) {
             toast.error(message);
         }
-        if (isSuccess || user) {
+        if (user) {
             navigate('/');
         }
         dispatch(reset());

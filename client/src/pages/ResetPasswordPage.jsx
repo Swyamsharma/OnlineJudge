@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, reset } from '../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 import Loader from '../components/Loader';
@@ -8,11 +8,11 @@ import Loader from '../components/Loader';
 function ResetPasswordPage() {
     const [password, setPassword] = useState('');
     const [password2, setPassword2] = useState('');
-    const [loading, setLoading] = useState(false);
     
     const { resettoken } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { isLoading } = useSelector((state) => state.auth);
 
     useEffect(() => {
         return () => {
@@ -28,8 +28,6 @@ function ResetPasswordPage() {
             return;
         }
 
-        setLoading(true);
-
         const userData = { password, token: resettoken };
         
         try {
@@ -43,12 +41,10 @@ function ResetPasswordPage() {
             }
         } catch (err) {
             toast.error("An unexpected error occurred.");
-        } finally {
-            setLoading(false);
         }
     };
 
-    if (loading) return <Loader />;
+    if (isLoading) return <Loader />;
 
     return (
         <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">

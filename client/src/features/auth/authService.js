@@ -35,9 +35,6 @@ const forgotPassword = async (email) => {
 const resetPassword = async (data) => {
     const {token, password} = data;
     const response = await axios.put(API_URL + `resetpassword/${token}`, { password });
-    if (response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data));
-    }
     return response.data;
 };
 

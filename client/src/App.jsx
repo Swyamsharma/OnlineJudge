@@ -35,7 +35,7 @@ function App() {
           </main>
         </div>
       </Router>
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 4000 }} />
     </>
   );
 }

@@ -23,6 +23,10 @@ export const registerUser = async (req, res) => {
             token: generateToken(user._id),
         });
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join('. ') });
+        }
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
@@ -115,16 +119,15 @@ export const resetPassword = async (req, res) => {
         await user.save();
 
         res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
             message: "Password has been reset successfully",
-            token: generateToken(user._id),
         });
         
     } catch (error) {
         console.error("Error in resetPassword controller:", error);
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join('. ') });
+        }
         res.status(500).json({ message: "Server error", error: error.message });
         
     }
