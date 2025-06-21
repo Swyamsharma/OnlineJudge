@@ -1,5 +1,5 @@
-import Problem from "../models/problemModel";
-import Testcase from "../models/testcaseModel";
+import Problem from "../models/problemModel.js";
+import Testcase from "../models/testcaseModel.js";
 
 // @desc    Create a new problem with test cases
 // @route   POST /api/problems
@@ -77,4 +77,69 @@ export const getProblemById = async (req, res) => {
     }
 };
 
+// @desc    Update a problem and its test cases
+// @route   PUT /api/problems/:id
+// @access  Private (Admin)
+export const updateProblem = async (req, res) => {
+    const { title, statement, difficulty, constraints, inputFormat, outputFormat, tags, testcases } = req.body;
+    try {
+        const problem = await Problem.findById(req.params.id);
+        if(problem){
+            problem.title = title || problem.title;
+            problem.statement = statement || problem.statement;
+            problem.difficulty = difficulty || problem.difficulty;
+            problem.constraints = constraints || problem.constraints;
+            problem.inputFormat = inputFormat || problem.inputFormat;
+            problem.outputFormat = outputFormat || problem.outputFormat;
+            problem.tags = tags || problem.tags;
 
+            const updatedProblem = await problem.save();
+
+            if (testcases && testcases.length > 0) {
+                await Testcase.deleteMany({problemId: problem._id});
+                const testcasesToCreate = testcases.map(tc => ({
+                    ...tc,
+                    problemId: problem._id
+                }));
+                await Testcase.insertMany(testcasesToCreate);
+            }
+            res.status(200).json(updatedProblem);
+        }
+        else {
+            res.status(404).json({
+                message: "Problem not found"
+            });
+        }
+    }
+    catch (error) {
+        res.status(400).json({
+            message: "Failed to update problem",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Delete a problem and its test cases
+// @route   DELETE /api/problems/:id
+// @access  Private (Admin)
+export const deleteProblem = async (req, res) => {
+    try {
+        const problem = await Problem.findById(req.params.id);
+        if(problem){
+            await Testcase.deleteMany({problemId: problem._id});
+            await problem.deleteOne();
+            res.status(200).json({
+                message: "Problem deleted successfully"
+            });
+        } else {
+            res.status(404).json({
+                message: "Problem not found"
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete problem",
+            error: error.message
+        });
+    }
+};

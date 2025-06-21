@@ -20,16 +20,24 @@ function Header() {
                     <Link to='/' className='text-2xl font-bold text-gray-800'>OnlineJudge</Link>
                 </div>
                 <ul className='flex items-center gap-6'>
+                    <li>
+                        <Link to='/problems'>Problems</Link>
+                    </li>
                     {user ? (
                         <>
+                            {user.role === 'admin' && (
+                                <li>
+                                    <Link to='/admin/dashboard' className="font-medium text-red-600">Admin</Link>
+                                </li>
+                            )}
                             <li>
                                 <Link to='/dashboard'>Dashboard</Link>
                             </li>
                             <li>
-                                <button 
+                                <button
                                     className='rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
                                     onClick={onLogout}>
-                                Logout
+                                    Logout
                                 </button>
                             </li>
                         </>

@@ -4,6 +4,7 @@ import cors from "cors";
 import passport from "passport";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import problemRoutes from "./routes/problemRoutes.js";
 import "./config/passport.js";
 
 
@@ -20,6 +21,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 app.use("/api/auth", authRoutes);
+app.use("/api/problems", problemRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
