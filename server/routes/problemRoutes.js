@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', getProblems);
 // router.get('/:id', getProblemById);
-router.get('/:id', protect, getProblemById);
+router.get('/:id', getProblemById);
 router.post('/', protect, admin, createProblem);
 router.put('/:id', protect, admin, updateProblem);
 router.delete('/:id', protect, admin, deleteProblem);

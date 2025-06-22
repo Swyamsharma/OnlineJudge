@@ -12,20 +12,20 @@ const problemSchema = new mongoose.Schema({
     },
     difficulty: {
         type: String,
-        enum: ["easy", "medium", "hard"],
+        enum: ["Easy", "Medium", "Hard"],
         required: [true, "Difficulty is required"],
     },
     constraints: {
         type: String,
         required: [true, "Constraints are required"],
-        inputFormat: {
-            type: String,
-            required: [true, "Input format is required"],
-        },
-        outputFormat: {
-            type: String,
-            required: [true, "Output format is required"],
-        },
+    },
+    inputFormat: {
+        type: String,
+        required: [true, "Input format is required"],
+    },
+    outputFormat: {
+        type: String,
+        required: [true, "Output format is required"],
     },
     tags: [{
         type: String,

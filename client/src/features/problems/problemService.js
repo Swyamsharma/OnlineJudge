@@ -29,11 +29,13 @@ const getProblems = async () => {
 }
 
 const getProblem = async (problemId, thunkAPI) => {
-    const config = {
-        headers: {
-            Authorization: `Bearer ${getToken(thunkAPI)}`
-        }
-    };
+    const token = thunkAPI.getState().auth.user?.token;
+    const config = {};
+    if(token){
+        config.headers = {
+            Authorization: `Bearer ${token}`
+        };
+    }
     try {
         const response = await axios.get(`${API_BASE_URL}/${problemId}`, config);
         return response.data;
