@@ -59,10 +59,25 @@ const updateProblem = async (problemData, thunkAPI) => {
     }
 };
 
+const deleteProblem = async (problemId, thunkAPI) => {
+    const config = {
+        headers: {
+            Authorization: `Bearer ${getToken(thunkAPI)}`
+        }
+    };
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/${problemId}`, config);
+        return response.data;
+    } catch (error) {
+        return thunkAPI.rejectWithValue(error.response.data.message || error.message);
+    }
+};
+
 const problemService = {
     createProblem,
     getProblems,
     getProblem,
     updateProblem,
+    deleteProblem
 };
 export default problemService;

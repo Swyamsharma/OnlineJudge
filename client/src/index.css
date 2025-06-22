@@ -35,3 +35,35 @@ body {
 .ResizeHandleOuter:hover .handle-bar {
   @apply bg-accent;
 }
+
+/* === Global Modern Overlay Scrollbar Styles === */
+
+/* Target elements that are set to scroll and apply the overlay behavior */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+  overflow: overlay;
+}
+
+/* For Webkit-based browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent; /* Track is invisible for overlay effect */
+}
+
+::-webkit-scrollbar-thumb {
+  /* Thumb appears on scroll */
+  @apply bg-slate-700 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  /* Highlight on hover */
+  @apply bg-accent;
+}
+
+/* For Firefox - A simple, thin scrollbar as a fallback */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1e293b; /* slate-600 slate-800 */
+}

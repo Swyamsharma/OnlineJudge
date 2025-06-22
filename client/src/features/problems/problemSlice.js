@@ -62,6 +62,19 @@ export const updateProblem = createAsyncThunk(
     }
 );
 
+// Delete a problem
+export const deleteProblem = createAsyncThunk(
+    "problem/delete",
+    async (problemId, thunkAPI) => {
+        try {
+            return await problemService.deleteProblem(problemId, thunkAPI);
+        } catch (error) {
+            const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
 export const problemSlice = createSlice({
     name: "problem",
     initialState,
@@ -117,6 +130,19 @@ export const problemSlice = createSlice({
                 state.isSuccess = true;
             })
             .addCase(updateProblem.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(deleteProblem.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(deleteProblem.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+                state.problems = state.problems.filter(problem => problem._id !== action.meta.arg);
+            })
+            .addCase(deleteProblem.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;

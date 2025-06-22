@@ -42,10 +42,13 @@ function ProblemFormPage() {
                 inputFormat: problem.inputFormat || '', outputFormat: problem.outputFormat || '',
                 tags: problem.tags?.join(', ') || '',
             });
-            setTestcases(Array.isArray(problem.testcases) && problem.testcases.length > 0
+            // Deep copy testcases to prevent direct state mutation
+            const deepCopiedTestcases = JSON.parse(JSON.stringify(
+                Array.isArray(problem.testcases) && problem.testcases.length > 0
                 ? problem.testcases
                 : [{ input: '', expectedOutput: '', isSample: true, explanation: '' }]
-            );
+            ));
+            setTestcases(deepCopiedTestcases);
         }
     }, [problem, isEditMode, problemId]);
 
@@ -55,9 +58,18 @@ function ProblemFormPage() {
     };
 
     const handleTestcaseChange = (index, e) => {
-        const newTestcases = [...testcases];
         const { name, value, type, checked } = e.target;
-        newTestcases[index][name] = type === 'checkbox' ? checked : value;
+        const newTestcases = testcases.map((testcase, i) => {
+            // If it's not the testcase we're editing, return it unchanged.
+            if (i !== index) {
+                return testcase;
+            }
+            // Otherwise, return a new object with the updated value.
+            return {
+                ...testcase,
+                [name]: type === 'checkbox' ? checked : value
+            };
+        });
         setTestcases(newTestcases);
     };
 
