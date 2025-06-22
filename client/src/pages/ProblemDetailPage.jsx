@@ -7,12 +7,12 @@ import { toast } from 'react-hot-toast';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 const VerticalHandleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400">
         <path d="M10.5 6a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 10.5 6Zm3.75.75a.75.75 0 0 0-1.5 0v10.5a.75.75 0 0 0 1.5 0V6.75Z" />
     </svg>
 );
 const HorizontalHandleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400">
         <path d="M18 10.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1 0-1.5h10.5a.75.75 0 0 1 .75.75Zm-.75 3.75a.75.75 0 0 0 0-1.5H6.75a.75.75 0 0 0 0 1.5h10.5Z" />
     </svg>
 );
@@ -24,7 +24,7 @@ function ProblemDetailPage() {
     const { problem, isLoading, isError, message } = useSelector((state) => state.problem);
     
     const [activeTab, setActiveTab] = useState('testcases');
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState('c++');
     const [code, setCode] = useState('// Your code here');
 
     useEffect(() => {
@@ -44,55 +44,55 @@ function ProblemDetailPage() {
     const sampleTestcases = problem.testcases?.filter(tc => tc.isSample) || [];
 
     const renderProblemDetails = () => (
-        <div className="p-4 overflow-y-auto h-full bg-white border border-gray-200 rounded-lg">
+        <div className="p-4 overflow-y-auto h-full bg-gray-800 border border-gray-700 rounded-lg text-gray-300">
             <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold text-gray-800">{problem.title}</h1>
+                <h1 className="text-3xl font-bold text-white">{problem.title}</h1>
                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                    problem.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                    problem.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
+                    problem.difficulty === 'Easy' ? 'bg-green-900 text-green-300' :
+                    problem.difficulty === 'Medium' ? 'bg-yellow-900 text-yellow-300' :
+                    'bg-red-900 text-red-300'
                 }`}>
                     {problem.difficulty}
                 </span>
             </div>
 
-            <div className="prose prose-sm max-w-none mb-6">
+            <div className="prose prose-sm max-w-none mb-6 text-gray-300">
                 <p>{problem.statement}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <h3 className="font-semibold text-md mb-2">Input Format</h3>
-                    <p className="text-gray-700 text-sm">{problem.inputFormat}</p>
+                    <h3 className="font-semibold text-md mb-2 text-gray-100">Input Format</h3>
+                    <p className="text-gray-300 text-sm">{problem.inputFormat}</p>
                 </div>
                 <div>
-                    <h3 className="font-semibold text-md mb-2">Output Format</h3>
-                    <p className="text-gray-700 text-sm">{problem.outputFormat}</p>
+                    <h3 className="font-semibold text-md mb-2 text-gray-100">Output Format</h3>
+                    <p className="text-gray-300 text-sm">{problem.outputFormat}</p>
                 </div>
             </div>
 
             <div className="mb-6">
-                <h3 className="font-semibold text-md mb-2">Constraints</h3>
-                <pre className="bg-gray-100 p-3 rounded-md text-sm whitespace-pre-wrap">{problem.constraints}</pre>
+                <h3 className="font-semibold text-md mb-2 text-gray-100">Constraints</h3>
+                <pre className="bg-gray-700 p-3 rounded-md text-sm whitespace-pre-wrap text-gray-200">{problem.constraints}</pre>
             </div>
             
             {sampleTestcases.map((tc, index) => (
                 <div key={index} className="mb-4">
-                    <h3 className="font-semibold text-md mb-2">Sample Case {index + 1}</h3>
+                    <h3 className="font-semibold text-md mb-2 text-gray-100">Sample Case {index + 1}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <h4 className="font-medium text-sm mb-1">Input:</h4>
-                            <pre className="bg-gray-100 p-3 rounded-md text-sm">{tc.input}</pre>
+                            <h4 className="font-medium text-sm mb-1 text-gray-200">Input:</h4>
+                            <pre className="bg-gray-700 p-3 rounded-md text-sm text-gray-200">{tc.input}</pre>
                         </div>
                         <div>
-                            <h4 className="font-medium text-sm mb-1">Output:</h4>
-                            <pre className="bg-gray-100 p-3 rounded-md text-sm">{tc.expectedOutput}</pre>
+                            <h4 className="font-medium text-sm mb-1 text-gray-200">Output:</h4>
+                            <pre className="bg-gray-700 p-3 rounded-md text-sm text-gray-200">{tc.expectedOutput}</pre>
                         </div>
                     </div>
                     {tc.explanation && (
                          <div className="mt-2">
-                            <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                            <p className="text-gray-600 bg-blue-50 p-3 rounded-md text-sm">{tc.explanation}</p>
+                            <h4 className="font-medium text-sm mb-1 text-gray-200">Explanation:</h4>
+                            <p className="bg-gray-700/50 p-3 rounded-md text-sm text-gray-300">{tc.explanation}</p>
                         </div>
                     )}
                 </div>
@@ -101,12 +101,12 @@ function ProblemDetailPage() {
     );
 
     const renderIde = () => (
-        <div className="flex flex-col h-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="flex-none p-2 border-b">
-                 <select value={language} onChange={e => setLanguage(e.target.value)} className="p-1 border rounded text-sm">
+        <div className="flex flex-col h-full bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="flex-none p-2 border-b border-gray-700">
+                 <select value={language} onChange={e => setLanguage(e.target.value)} className="p-1 border rounded text-sm bg-gray-700 text-white border-gray-600">
+                    <option value="cpp">C++</option>
                     <option value="javascript">JavaScript</option>
                     <option value="python">Python</option>
-                    <option value="cpp">C++</option>
                     <option value="java">Java</option>
                 </select>
             </div>
@@ -122,11 +122,11 @@ function ProblemDetailPage() {
     );
 
     const renderBottomPanel = () => (
-        <div className="flex flex-col h-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="flex-none border-b">
+        <div className="flex flex-col h-full bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="flex-none border-b border-gray-700">
                 <nav className="flex space-x-4 px-2">
-                    <button onClick={() => setActiveTab('testcases')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'testcases' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>Testcases</button>
-                    <button onClick={() => setActiveTab('result')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'result' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>Result</button>
+                    <button onClick={() => setActiveTab('testcases')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'testcases' ? 'border-b-2 border-indigo-400 text-indigo-400' : 'text-gray-400 hover:text-gray-200'}`}>Testcases</button>
+                    <button onClick={() => setActiveTab('result')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'result' ? 'border-b-2 border-indigo-400 text-indigo-400' : 'text-gray-400 hover:text-gray-200'}`}>Result</button>
                 </nav>
             </div>
             <div className="flex-grow p-4 overflow-y-auto">
@@ -134,15 +134,15 @@ function ProblemDetailPage() {
                     <div>
                         {sampleTestcases.map((tc, index) => (
                              <div key={index} className="mb-4">
-                                <p className="font-semibold text-sm mb-1">Case {index + 1}</p>
+                                <p className="font-semibold text-sm mb-1 text-gray-200">Case {index + 1}</p>
                                 <div className="flex space-x-4">
                                     <div className="flex-1">
-                                        <label className="text-xs text-gray-500">Input</label>
-                                        <pre className="bg-gray-100 p-2 rounded text-xs mt-1">{tc.input}</pre>
+                                        <label className="text-xs text-gray-400">Input</label>
+                                        <pre className="bg-gray-700 p-2 rounded text-xs mt-1 text-gray-200">{tc.input}</pre>
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-xs text-gray-500">Output</label>
-                                        <pre className="bg-gray-100 p-2 rounded text-xs mt-1">{tc.expectedOutput}</pre>
+                                        <label className="text-xs text-gray-400">Output</label>
+                                        <pre className="bg-gray-700 p-2 rounded text-xs mt-1 text-gray-200">{tc.expectedOutput}</pre>
                                     </div>
                                 </div>
                             </div>
@@ -151,12 +151,12 @@ function ProblemDetailPage() {
                 )}
                  {activeTab === 'result' && (
                     <div>
-                        <p className="text-sm text-gray-600">Run your code to see the result here.</p>
+                        <p className="text-sm text-gray-400">Run your code to see the result here.</p>
                     </div>
                 )}
             </div>
-            <div className="flex-none p-2 border-t flex justify-end items-center space-x-2">
-                <button className="px-4 py-1.5 text-sm font-semibold rounded-md bg-gray-200 hover:bg-gray-300">Run</button>
+            <div className="flex-none p-2 border-t border-gray-700 flex justify-end items-center space-x-2">
+                <button className="px-4 py-1.5 text-sm font-semibold rounded-md bg-gray-600 hover:bg-gray-500 text-white">Run</button>
                 <button className="px-4 py-1.5 text-sm font-semibold rounded-md text-white bg-green-600 hover:bg-green-700">Submit</button>
             </div>
         </div>

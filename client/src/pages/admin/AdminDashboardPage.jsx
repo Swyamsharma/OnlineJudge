@@ -1,16 +1,27 @@
 import { Link } from 'react-router-dom';
+import { VscCode, VscPerson, VscChecklist } from "react-icons/vsc";
 
 function AdminDashboardPage() {
     return (
-        <div className='container mx-auto'>
-            <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-            <p className="mb-4">Welcome, Admin. Use the links below to manage the platform.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link to="/admin/problems" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                    <h2 className="text-xl font-semibold text-indigo-600">Manage Problems</h2>
-                    <p className="text-gray-600 mt-2">Create, view, edit, and delete coding problems.</p>
+        <div className='max-w-7xl mx-auto w-full'>
+            <h1 className="text-3xl font-bold mb-6 text-text-primary">Admin Dashboard</h1>
+            <p className="mb-8 text-text-secondary">Welcome, Admin. Use the links below to manage the platform.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Link to="/admin/problems" className="bg-primary p-6 rounded-lg border border-border-color hover:border-accent transition-all hover:-translate-y-1 group">
+                    <VscCode className="h-8 w-8 text-accent mb-4" />
+                    <h2 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">Manage Problems</h2>
+                    <p className="text-text-secondary mt-2">Create, view, edit, and delete coding problems.</p>
                 </Link>
-                {/* Add more links here later, e.g., Manage Users, View Submissions */}
+                 <div className="bg-primary/50 p-6 rounded-lg border border-dashed border-border-color cursor-not-allowed">
+                    <VscPerson className="h-8 w-8 text-slate-500 mb-4" />
+                    <h2 className="text-xl font-semibold text-slate-400">Manage Users</h2>
+                    <p className="text-slate-500 mt-2">View user roles and activity. (Coming Soon)</p>
+                </div>
+                 <div className="bg-primary/50 p-6 rounded-lg border border-dashed border-border-color cursor-not-allowed">
+                    <VscChecklist className="h-8 w-8 text-slate-500 mb-4" />
+                    <h2 className="text-xl font-semibold text-slate-400">View Submissions</h2>
+                    <p className="text-slate-500 mt-2">Review all user submissions. (Coming Soon)</p>
+                </div>
             </div>
         </div>
     );

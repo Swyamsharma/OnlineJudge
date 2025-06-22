@@ -4,10 +4,12 @@ function DashboardPage() {
     const { user } = useSelector((state) => state.auth);
 
     return (
-        <div className="container mx-auto">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="mt-4 text-lg">Welcome back, {user?.name}!</p>
-            <p>This is a protected page. Only logged-in users can see this.</p>
+        <div className="max-w-7xl mx-auto w-full">
+            <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+            <div className="mt-8 p-8 bg-primary border border-border-color rounded-lg">
+                <h2 className="text-2xl font-semibold text-text-primary">Welcome back, {user?.name}!</h2>
+                <p className="mt-2 text-text-secondary">This is your personal dashboard. More stats and features coming soon!</p>
+            </div>
         </div>
     );
 }

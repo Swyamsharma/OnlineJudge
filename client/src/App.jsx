@@ -26,9 +26,8 @@ function App() {
   return (
     <>
       <Router>
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-screen bg-secondary">
           <Header />
-          {/* REMOVED 'container' and 'mx-auto' classes to make it full width */}
           <main className="flex-1 flex flex-col px-6 py-8 min-h-0">
             <Routes>
               {/* Public Routes */}
@@ -56,7 +55,10 @@ function App() {
           </main>
         </div>
       </Router>
-      <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 4000 }} />
+      <Toaster position="top-center" reverseOrder={false} toastOptions={{ 
+        duration: 4000,
+        className: 'toast-style' 
+      }} />
     </>
   );
 }

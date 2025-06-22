@@ -53,23 +53,15 @@ function RegisterPage() {
     }
 
     return (
-        <div className="container mx-auto">
-            <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-                    Create an account
+        <div className="flex-1 flex flex-col justify-center items-center">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md bg-primary p-8 rounded-lg border border-border-color shadow-lg">
+                <h2 className="mb-6 text-center text-3xl font-bold tracking-tight text-text-primary">
+                    Create your account
                 </h2>
-            </div>
-
-            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <form className="space-y-6" onSubmit={onSubmit}>
                     <div>
-                        <label
-                            htmlFor="name"
-                            className="block text-sm font-medium leading-6 text-gray-900 text-left"
-                        >
-                            Name
-                        </label>
-                        <div className="mt-2">
+                        <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Name</label>
+                        <div className="mt-1">
                             <input
                                 id="name"
                                 name="name"
@@ -77,18 +69,13 @@ function RegisterPage() {
                                 value={name}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2"
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
                             />
                         </div>
                     </div>
                     <div>
-                        <label
-                            htmlFor="email"
-                            className="block text-sm font-medium leading-6 text-gray-900 text-left"
-                        >
-                            Email address
-                        </label>
-                        <div className="mt-2">
+                        <label htmlFor="email" className="block text-sm font-medium text-text-secondary">Email address</label>
+                        <div className="mt-1">
                             <input
                                 id="email"
                                 name="email"
@@ -96,21 +83,14 @@ function RegisterPage() {
                                 value={email}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2"
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <div className="flex items-center justify-between">
-                            <label
-                                htmlFor="password"
-                                className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                                Password
-                            </label>
-                        </div>
-                        <div className="mt-2">
+                        <label htmlFor="password"className="block text-sm font-medium text-text-secondary">Password</label>
+                        <div className="mt-1">
                             <input
                                 id="password"
                                 name="password"
@@ -118,20 +98,13 @@ function RegisterPage() {
                                 value={password}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2"
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
                             />
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center justify-between">
-                            <label
-                                htmlFor="password2"
-                                className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                                Confirm Password
-                            </label>
-                        </div>
-                        <div className="mt-2">
+                        <label htmlFor="password2" className="block text-sm font-medium text-text-secondary">Confirm Password</label>
+                        <div className="mt-1">
                             <input
                                 id="password2"
                                 name="password2"
@@ -139,7 +112,7 @@ function RegisterPage() {
                                 value={password2}
                                 onChange={onChange}
                                 required
-                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2"
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
                             />
                         </div>
                     </div>
@@ -147,19 +120,16 @@ function RegisterPage() {
                     <div>
                         <button
                             type="submit"
-                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            className="flex w-full justify-center rounded-md border border-transparent bg-accent py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary"
                         >
                             Sign up
                         </button>
                     </div>
                 </form>
 
-                <p className="mt-10 text-center text-sm text-gray-500">
+                <p className="mt-8 text-center text-sm text-text-secondary">
                     Already have an account?{" "}
-                    <Link
-                        to="/login"
-                        className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-                    >
+                    <Link to="/login" className="font-medium text-accent hover:text-accent-hover">
                         Sign in
                     </Link>
                 </p>

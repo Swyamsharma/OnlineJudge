@@ -6,11 +6,8 @@ import { toast } from 'react-hot-toast';
 import Loader from '../../components/Loader';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-// Re-using the handle icon for a consistent UI
-const VerticalHandleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
-        <path d="M10.5 6a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 10.5 6Zm3.75.75a.75.75 0 0 0-1.5 0v10.5a.75.75 0 0 0 1.5 0V6.75Z" />
-    </svg>
+const HandleBar = ({ orientation }) => (
+    <div className={`handle-bar ${orientation === 'vertical' ? 'w-1 h-8' : 'w-8 h-1'}`} />
 );
 
 function ProblemFormPage() {
@@ -22,12 +19,8 @@ function ProblemFormPage() {
     const { problem, isLoading, isError, message } = useSelector(state => state.problem);
 
     const [formData, setFormData] = useState({
-        title: '',
-        statement: '',
-        difficulty: 'Easy',
-        constraints: '',
-        inputFormat: '',
-        outputFormat: '',
+        title: '', statement: '', difficulty: 'Easy',
+        constraints: '', inputFormat: '', outputFormat: '',
         tags: '',
     });
 
@@ -36,26 +29,17 @@ function ProblemFormPage() {
     ]);
 
     useEffect(() => {
-        if (isError) {
-            toast.error(message);
-        }
-        if (isEditMode) {
-            dispatch(getProblem(problemId));
-        }
-        return () => {
-            dispatch(reset());
-        }
+        if (isError) { toast.error(message); }
+        if (isEditMode) { dispatch(getProblem(problemId)); }
+        return () => { dispatch(reset()); }
     }, [problemId, isEditMode, isError, message, dispatch]);
 
     useEffect(() => {
         if (isEditMode && problem && problem._id === problemId) {
             setFormData({
-                title: problem.title || '',
-                statement: problem.statement || '',
-                difficulty: problem.difficulty || 'Easy',
-                constraints: problem.constraints || '',
-                inputFormat: problem.inputFormat || '',
-                outputFormat: problem.outputFormat || '',
+                title: problem.title || '', statement: problem.statement || '',
+                difficulty: problem.difficulty || 'Easy', constraints: problem.constraints || '',
+                inputFormat: problem.inputFormat || '', outputFormat: problem.outputFormat || '',
                 tags: problem.tags?.join(', ') || '',
             });
             setTestcases(Array.isArray(problem.testcases) && problem.testcases.length > 0
@@ -86,8 +70,7 @@ function ProblemFormPage() {
             toast.error("You must have at least one test case.");
             return;
         }
-        const newTestcases = testcases.filter((_, i) => i !== index);
-        setTestcases(newTestcases);
+        setTestcases(testcases.filter((_, i) => i !== index));
     };
 
     const onSubmit = (e) => {
@@ -97,9 +80,7 @@ function ProblemFormPage() {
             tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
             testcases
         };
-
         const action = isEditMode ? updateProblem({ id: problemId, ...problemData }) : createProblem(problemData);
-
         dispatch(action).then((result) => {
             if (result.type.endsWith('/fulfilled')) {
                 toast.success(`Problem ${isEditMode ? 'updated' : 'created'} successfully!`);
@@ -112,48 +93,46 @@ function ProblemFormPage() {
 
     if (isLoading && !problem.title && isEditMode) return <Loader />;
 
+    const inputClasses = "block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm";
+    const labelClasses = "block text-sm font-medium text-text-secondary mb-1";
+    
     return (
-        <div className="container mx-auto">
+        <div className="max-w-7xl mx-auto w-full">
             <form onSubmit={onSubmit} className="flex flex-col h-[calc(100vh-150px)]">
-                <h1 className="text-2xl font-bold mb-4 flex-none">{isEditMode ? 'Edit Problem' : 'Create New Problem'}</h1>
+                <h1 className="text-2xl font-bold mb-4 flex-none text-text-primary">{isEditMode ? 'Edit Problem' : 'Create New Problem'}</h1>
 
                 <div className="flex-grow min-h-0">
                     <PanelGroup direction="horizontal">
                         <Panel defaultSize={50} minSize={30}>
-                            <div className="p-6 h-full overflow-y-auto bg-white border rounded-lg space-y-4">
-                                <input name="title" value={formData.title} onChange={handleFormChange} placeholder="Problem Title" required className="w-full p-2 border rounded" />
-                                <textarea name="statement" value={formData.statement} onChange={handleFormChange} placeholder="Problem Statement (supports Markdown)" rows="6" required className="w-full p-2 border rounded"></textarea>
-                                <select name="difficulty" value={formData.difficulty} onChange={handleFormChange} className="w-full p-2 border rounded">
-                                    <option>Easy</option>
-                                    <option>Medium</option>
-                                    <option>Hard</option>
-                                </select>
-                                <textarea name="constraints" value={formData.constraints} onChange={handleFormChange} placeholder="Constraints (e.g., 1 <= N <= 1000)" rows="3" required className="w-full p-2 border rounded"></textarea>
-                                <textarea name="inputFormat" value={formData.inputFormat} onChange={handleFormChange} placeholder="Input Format" rows="3" required className="w-full p-2 border rounded"></textarea>
-                                <textarea name="outputFormat" value={formData.outputFormat} onChange={handleFormChange} placeholder="Output Format" rows="3" required className="w-full p-2 border rounded"></textarea>
-                                <input name="tags" value={formData.tags} onChange={handleFormChange} placeholder="Tags (comma-separated, e.g., array, dp, graph)" className="w-full p-2 border rounded" />
+                            <div className="p-6 h-full overflow-y-auto bg-primary border border-border-color rounded-lg space-y-4">
+                                <div><label htmlFor="title" className={labelClasses}>Title</label><input id="title" name="title" value={formData.title} onChange={handleFormChange} required className={inputClasses} /></div>
+                                <div><label htmlFor="statement" className={labelClasses}>Statement (Markdown)</label><textarea id="statement" name="statement" value={formData.statement} onChange={handleFormChange} rows="5" required className={inputClasses}></textarea></div>
+                                <div><label htmlFor="difficulty" className={labelClasses}>Difficulty</label><select id="difficulty" name="difficulty" value={formData.difficulty} onChange={handleFormChange} className={inputClasses}><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                                <div><label htmlFor="constraints" className={labelClasses}>Constraints</label><textarea id="constraints" name="constraints" value={formData.constraints} onChange={handleFormChange} rows="3" required className={inputClasses}></textarea></div>
+                                <div><label htmlFor="inputFormat" className={labelClasses}>Input Format</label><textarea id="inputFormat" name="inputFormat" value={formData.inputFormat} onChange={handleFormChange} rows="3" required className={inputClasses}></textarea></div>
+                                <div><label htmlFor="outputFormat" className={labelClasses}>Output Format</label><textarea id="outputFormat" name="outputFormat" value={formData.outputFormat} onChange={handleFormChange} rows="3" required className={inputClasses}></textarea></div>
+                                <div><label htmlFor="tags" className={labelClasses}>Tags (comma-separated)</label><input id="tags" name="tags" value={formData.tags} onChange={handleFormChange} className={inputClasses} /></div>
                             </div>
                         </Panel>
 
-                        <PanelResizeHandle className="ResizeHandleOuter">
-                            <VerticalHandleIcon />
-                        </PanelResizeHandle>
+                        <PanelResizeHandle className="ResizeHandleOuter"><HandleBar orientation="vertical" /></PanelResizeHandle>
 
                         <Panel defaultSize={50} minSize={30}>
-                            <div className="p-6 h-full overflow-y-auto bg-white border rounded-lg">
-                                <h2 className="text-xl font-bold mb-4">Test Cases</h2>
+                            <div className="p-6 h-full overflow-y-auto bg-primary border border-border-color rounded-lg">
+                                <h2 className="text-xl font-semibold mb-4 text-text-primary">Test Cases</h2>
+                                <div className="space-y-4">
                                 {testcases.map((tc, index) => (
-                                    <div key={index} className="space-y-2 border p-4 rounded-md mb-4 relative bg-gray-50">
-                                        <button type="button" onClick={() => removeTestcase(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold z-10">X</button>
-                                        <textarea name="input" value={tc.input} onChange={(e) => handleTestcaseChange(index, e)} placeholder={`Input for TC #${index + 1}`} required className="w-full p-2 border rounded" rows="3"></textarea>
-                                        <textarea name="expectedOutput" value={tc.expectedOutput} onChange={(e) => handleTestcaseChange(index, e)} placeholder={`Expected Output for TC #${index + 1}`} required className="w-full p-2 border rounded" rows="3"></textarea>
-                                        <textarea name="explanation" value={tc.explanation || ''} onChange={(e) => handleTestcaseChange(index, e)} placeholder="Explanation (optional, for sample cases)" className="w-full p-2 border rounded" rows="2"></textarea>
-                                        <label className="flex items-center">
-                                            <input type="checkbox" name="isSample" checked={tc.isSample} onChange={(e) => handleTestcaseChange(index, e)} className="mr-2" /> Is Sample Case
-                                        </label>
+                                    <div key={index} className="space-y-2 border border-border-color p-4 rounded-md relative bg-secondary">
+                                        <button type="button" onClick={() => removeTestcase(index)} className="absolute top-2 right-2 text-text-secondary hover:text-red-500 font-bold z-10 p-1 rounded-full">×</button>
+                                        <h3 className="font-medium text-text-primary">Test Case #{index+1}</h3>
+                                        <div><label className={labelClasses}>Input</label><textarea name="input" value={tc.input} onChange={(e) => handleTestcaseChange(index, e)} required className={inputClasses} rows="3"></textarea></div>
+                                        <div><label className={labelClasses}>Expected Output</label><textarea name="expectedOutput" value={tc.expectedOutput} onChange={(e) => handleTestcaseChange(index, e)} required className={inputClasses} rows="3"></textarea></div>
+                                        <div><label className={labelClasses}>Explanation (Optional)</label><textarea name="explanation" value={tc.explanation || ''} onChange={(e) => handleTestcaseChange(index, e)} className={inputClasses} rows="2"></textarea></div>
+                                        <label className="flex items-center text-text-secondary"><input type="checkbox" name="isSample" checked={tc.isSample} onChange={(e) => handleTestcaseChange(index, e)} className="mr-2 h-4 w-4 rounded bg-secondary border-border-color text-accent focus:ring-accent" /> Is Sample Case</label>
                                     </div>
                                 ))}
-                                <button type="button" onClick={addTestcase} className="w-full bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded hover:bg-gray-300">
+                                </div>
+                                <button type="button" onClick={addTestcase} className="w-full mt-4 bg-slate-700 text-text-primary font-medium py-2 px-4 rounded-md hover:bg-slate-600 transition-colors">
                                     + Add Test Case
                                 </button>
                             </div>
@@ -162,7 +141,7 @@ function ProblemFormPage() {
                 </div>
 
                 <div className="flex-none pt-4">
-                    <button type="submit" disabled={isLoading} className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed">
+                    <button type="submit" disabled={isLoading} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-md hover:bg-accent-hover disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors">
                         {isLoading ? 'Saving...' : (isEditMode ? 'Update Problem' : 'Create Problem')}
                     </button>
                 </div>

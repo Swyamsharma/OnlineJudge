@@ -3,29 +3,35 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-50;
+  @apply bg-secondary text-text-secondary font-sans;
 }
 
-/* Updated Styles for react-resizable-panels with a smaller gap and new icon focus */
+/* Style for react-hot-toast */
+.toast-style {
+  @apply bg-primary border border-border-color text-text-primary;
+}
+
+/* Updated Styles for react-resizable-panels with new colors */
 .ResizeHandleOuter {
-  @apply flex items-center justify-center;
+  @apply flex items-center justify-center bg-secondary;
 }
 
 .ResizeHandleOuter[data-orientation="vertical"] {
-  @apply w-2 cursor-col-resize; /* Reduced from w-3 to make gap smaller */
+  @apply w-3 cursor-col-resize;
 }
 
 .ResizeHandleOuter[data-orientation="horizontal"] {
-  @apply h-2 cursor-row-resize; /* Reduced from h-3 to make gap smaller */
+  @apply h-3 cursor-row-resize;
 }
 
-.ResizeHandleOuter svg {
-  @apply transition-transform duration-100;
-  pointer-events: none; /* This is the key change! */
+.ResizeHandleOuter .handle-bar {
+    @apply w-1 h-8 rounded-full bg-border-color transition-colors;
 }
 
-/* Make the icon slightly larger and more prominent on hover/drag for better feedback */
-.ResizeHandleOuter:hover svg,
-.ResizeHandleOuter[data-resize-handle-state="drag"] svg {
-  transform: scale(1.2);
+.ResizeHandleOuter[data-orientation="horizontal"] .handle-bar {
+    @apply w-8 h-1;
+}
+
+.ResizeHandleOuter:hover .handle-bar {
+  @apply bg-accent;
 }

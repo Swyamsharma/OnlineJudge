@@ -47,36 +47,38 @@ function ResetPasswordPage() {
     if (isLoading) return <Loader />;
 
     return (
-        <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-                    Reset Your Password
+        <div className="flex-1 flex flex-col justify-center items-center">
+             <div className="sm:mx-auto sm:w-full sm:max-w-md bg-primary p-8 rounded-lg border border-border-color shadow-lg">
+                <h2 className="mb-6 text-center text-3xl font-bold tracking-tight text-text-primary">
+                    Set a New Password
                 </h2>
-            </div>
-            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <form className="space-y-6" onSubmit={onSubmit}>
                     <div>
-                        <label className="block text-sm font-medium leading-6 text-gray-900 text-left">New Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 p-2"
-                        />
+                        <label className="block text-sm font-medium text-text-secondary">New Password</label>
+                        <div className="mt-1">
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                            />
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium leading-6 text-gray-900 text-left">Confirm New Password</label>
-                        <input
-                            type="password"
-                            value={password2}
-                            onChange={(e) => setPassword2(e.target.value)}
-                            required
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 p-2"
-                        />
+                        <label className="block text-sm font-medium text-text-secondary">Confirm New Password</label>
+                        <div className="mt-1">
+                            <input
+                                type="password"
+                                value={password2}
+                                onChange={(e) => setPassword2(e.target.value)}
+                                required
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                            />
+                        </div>
                     </div>
                     <div>
-                        <button type="submit" className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        <button type="submit" className="flex w-full justify-center rounded-md border border-transparent bg-accent py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary">
                             Reset Password
                         </button>
                     </div>
