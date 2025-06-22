@@ -49,6 +49,19 @@ export const getProblem = createAsyncThunk(
     }
 );
 
+// Update a problem
+export const updateProblem = createAsyncThunk(
+    "problem/update",
+    async (problemData, thunkAPI) => {
+        try {
+            return await problemService.updateProblem(problemData, thunkAPI);
+        } catch (error) {
+            const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
 export const problemSlice = createSlice({
     name: "problem",
     initialState,
@@ -92,6 +105,18 @@ export const problemSlice = createSlice({
                 state.problem = action.payload;
             })
             .addCase(getProblem.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(updateProblem.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(updateProblem.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.isSuccess = true;
+            })
+            .addCase(updateProblem.rejected, (state, action) => {
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;

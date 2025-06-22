@@ -44,9 +44,25 @@ const getProblem = async (problemId, thunkAPI) => {
     }
 }
 
+const updateProblem = async (problemData, thunkAPI) => {
+    const config = {
+        headers: {  
+            Authorization: `Bearer ${getToken(thunkAPI)}`
+        }
+    };
+    const { id, ...dataToUpdate } = problemData;
+    try {
+        const response = await axios.put(`${API_BASE_URL}/${id}`, dataToUpdate, config);
+        return response.data;
+    } catch (error) {
+        return thunkAPI.rejectWithValue(error.response.data.message || error.message);
+    }
+};
+
 const problemService = {
     createProblem,
     getProblems,
     getProblem,
+    updateProblem,
 };
 export default problemService;
