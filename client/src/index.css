@@ -5,3 +5,27 @@
 body {
   @apply bg-gray-50;
 }
+
+/* Updated Styles for react-resizable-panels with a smaller gap and new icon focus */
+.ResizeHandleOuter {
+  @apply flex items-center justify-center;
+}
+
+.ResizeHandleOuter[data-orientation="vertical"] {
+  @apply w-2 cursor-col-resize; /* Reduced from w-3 to make gap smaller */
+}
+
+.ResizeHandleOuter[data-orientation="horizontal"] {
+  @apply h-2 cursor-row-resize; /* Reduced from h-3 to make gap smaller */
+}
+
+.ResizeHandleOuter svg {
+  @apply transition-transform duration-100;
+  pointer-events: none; /* This is the key change! */
+}
+
+/* Make the icon slightly larger and more prominent on hover/drag for better feedback */
+.ResizeHandleOuter:hover svg,
+.ResizeHandleOuter[data-resize-handle-state="drag"] svg {
+  transform: scale(1.2);
+}

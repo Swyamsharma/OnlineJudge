@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 function AdminDashboardPage() {
     return (
-        <div>
+        <div className='container mx-auto'>
             <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
             <p className="mb-4">Welcome, Admin. Use the links below to manage the platform.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

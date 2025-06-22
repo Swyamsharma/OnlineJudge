@@ -20,7 +20,7 @@ function AdminProblemListPage() {
     }
 
     return (
-        <div>
+        <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Manage Problems</h1>
                 <Link to="/admin/problems/new" className="bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700">

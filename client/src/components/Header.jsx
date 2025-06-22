@@ -15,7 +15,7 @@ function Header() {
 
     return (
         <header className='bg-white shadow-md'>
-            <div className='container mx-auto flex h-16 items-center justify-between px-4'>
+            <div className='flex h-16 items-center justify-between px-6'>
                 <div className='logo'>
                     <Link to='/' className='text-2xl font-bold text-gray-800'>OnlineJudge</Link>
                 </div>

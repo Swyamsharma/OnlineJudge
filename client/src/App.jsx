@@ -26,9 +26,10 @@ function App() {
   return (
     <>
       <Router>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col h-screen">
           <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          {/* REMOVED 'container' and 'mx-auto' classes to make it full width */}
+          <main className="flex-1 flex flex-col px-6 py-8 min-h-0">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
