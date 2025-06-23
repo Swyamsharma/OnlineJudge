@@ -98,17 +98,11 @@ export const forgotPassword = async (req, res) => {
 // @access  Public
 export const resetPassword = async (req, res) => {
     try {
-        console.log('Incoming reset token from params:', req.params.resettoken);
         const resetPasswordToken = crypto.createHash("sha256").update(req.params.resettoken).digest("hex");
-        console.log('Hashed token for DB search:', resetPasswordToken);
-
         const user = await User.findOne({
             resetPasswordToken,
             resetPasswordExpire: { $gt: Date.now() },
         });
-        
-        console.log('User found for token:', user ? user.email : 'No user found');
-
         if (!user) {
             return res.status(400).json({ message: "Invalid or expired token" });
         }

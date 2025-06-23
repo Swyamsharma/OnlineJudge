@@ -1,3 +1,4 @@
+import axios from "axios";
 import Problem from "../models/problemModel.js";
 import Testcase from "../models/testcaseModel.js";
 
@@ -142,4 +143,20 @@ export const deleteProblem = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// @desc    Run code against custom input
+// @route   POST /api/problems/run
+// @access  Private
+export const runCode = async (req, res, next) => {
+    const { language, code, input } = req.body;
+    const EVALUATION_SERVICE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001/run';
+
+    const response = await axios.post(EVALUATION_SERVICE_URL, {
+        language,
+        code,
+        input
+    });
+    
+    res.status(200).json(response.data);
 };

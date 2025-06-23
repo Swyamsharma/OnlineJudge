@@ -73,11 +73,22 @@ const deleteProblem = async (problemId, thunkAPI) => {
     }
 };
 
+const runCode = async (runData, thunkAPI) => {
+    const config = {
+        headers: {
+            Authorization: `Bearer ${thunkAPI.getState().auth.user.token}`
+        }
+    };
+    const response = await axios.post(`${API_BASE_URL}/run`, runData, config);
+    return response.data;
+};
+
 const problemService = {
     createProblem,
     getProblems,
     getProblem,
     updateProblem,
-    deleteProblem
+    deleteProblem,
+    runCode
 };
 export default problemService;
