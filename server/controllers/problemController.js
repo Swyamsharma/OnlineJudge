@@ -152,11 +152,18 @@ export const runCode = async (req, res, next) => {
     const { language, code, input } = req.body;
     const EVALUATION_SERVICE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001/run';
 
-    const response = await axios.post(EVALUATION_SERVICE_URL, {
-        language,
-        code,
-        input
-    });
-    
-    res.status(200).json(response.data);
+    try {
+        const response = await axios.post(EVALUATION_SERVICE_URL, {
+            language,
+            code,
+            input
+        });
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error("Error calling evaluation service:", error.message);
+        res.status(503).json({ 
+            error: 'Service Unavailable',
+            message: 'The code evaluation service is temporarily down. Please try again later.' 
+        });
+    }
 };

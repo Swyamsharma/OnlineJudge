@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import problemService from "./problemService";
+import { logout } from "../auth/authSlice";
 
 const initialState = {
     problems: [],
@@ -146,6 +147,9 @@ export const problemSlice = createSlice({
                 state.isLoading = false;
                 state.isError = true;
                 state.message = action.payload;
+            })
+            .addCase(logout.fulfilled, (state) => {
+                return initialState;
             });
     },
 });

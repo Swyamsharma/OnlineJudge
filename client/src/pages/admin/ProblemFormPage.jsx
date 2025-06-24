@@ -6,10 +6,6 @@ import { toast } from 'react-hot-toast';
 import Loader from '../../components/Loader';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-const HandleBar = ({ orientation }) => (
-    <div className={`handle-bar ${orientation === 'vertical' ? 'w-1 h-8' : 'w-8 h-1'}`} />
-);
-
 function ProblemFormPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -17,6 +13,9 @@ function ProblemFormPage() {
     const isEditMode = !!problemId;
 
     const { problem, isLoading, isError, message } = useSelector(state => state.problem);
+
+    // This flag prevents form data from being overwritten by Redux state updates after initial load.
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '', statement: '', difficulty: 'Easy',
@@ -29,28 +28,42 @@ function ProblemFormPage() {
     ]);
 
     useEffect(() => {
-        if (isError) { toast.error(message); }
-        if (isEditMode) { dispatch(getProblem(problemId)); }
-        return () => { dispatch(reset()); }
+        if (isError) { 
+            toast.error(message); 
+        }
+
+        if (isEditMode) {
+            setIsDataLoaded(false); 
+            dispatch(getProblem(problemId));
+        }
+        
+        return () => {
+            dispatch(reset());
+        }
     }, [problemId, isEditMode, isError, message, dispatch]);
 
     useEffect(() => {
-        if (isEditMode && problem && problem._id === problemId) {
+        if (isEditMode && problem && problem._id === problemId && !isDataLoaded) {
             setFormData({
-                title: problem.title || '', statement: problem.statement || '',
-                difficulty: problem.difficulty || 'Easy', constraints: problem.constraints || '',
-                inputFormat: problem.inputFormat || '', outputFormat: problem.outputFormat || '',
+                title: problem.title || '',
+                statement: problem.statement || '',
+                difficulty: problem.difficulty || 'Easy',
+                constraints: problem.constraints || '',
+                inputFormat: problem.inputFormat || '',
+                outputFormat: problem.outputFormat || '',
                 tags: problem.tags?.join(', ') || '',
             });
-            // Deep copy testcases to prevent direct state mutation
+
             const deepCopiedTestcases = JSON.parse(JSON.stringify(
                 Array.isArray(problem.testcases) && problem.testcases.length > 0
                 ? problem.testcases
                 : [{ input: '', expectedOutput: '', isSample: true, explanation: '' }]
             ));
             setTestcases(deepCopiedTestcases);
+
+            setIsDataLoaded(true);
         }
-    }, [problem, isEditMode, problemId]);
+    }, [problem, isEditMode, problemId, isDataLoaded]);
 
 
     const handleFormChange = (e) => {
@@ -59,17 +72,11 @@ function ProblemFormPage() {
 
     const handleTestcaseChange = (index, e) => {
         const { name, value, type, checked } = e.target;
-        const newTestcases = testcases.map((testcase, i) => {
-            // If it's not the testcase we're editing, return it unchanged.
-            if (i !== index) {
-                return testcase;
-            }
-            // Otherwise, return a new object with the updated value.
-            return {
-                ...testcase,
-                [name]: type === 'checkbox' ? checked : value
-            };
-        });
+        const newTestcases = testcases.map((testcase, i) => 
+            i === index
+                ? { ...testcase, [name]: type === 'checkbox' ? checked : value }
+                : testcase
+        );
         setTestcases(newTestcases);
     };
 
@@ -103,7 +110,9 @@ function ProblemFormPage() {
         });
     };
 
-    if (isLoading && !problem.title && isEditMode) return <Loader />;
+    if (isEditMode && !isDataLoaded) {
+        return <Loader />;
+    }
 
     const inputClasses = "block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm";
     const labelClasses = "block text-sm font-medium text-text-secondary mb-1";
@@ -127,7 +136,7 @@ function ProblemFormPage() {
                             </div>
                         </Panel>
 
-                        <PanelResizeHandle className="ResizeHandleOuter"><HandleBar orientation="vertical" /></PanelResizeHandle>
+                        <PanelResizeHandle className="ResizeHandleOuter" />
 
                         <Panel defaultSize={50} minSize={30}>
                             <div className="p-6 h-full overflow-y-auto bg-primary border border-border-color rounded-lg">
