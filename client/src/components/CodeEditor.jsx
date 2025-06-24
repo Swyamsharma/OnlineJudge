@@ -4,7 +4,7 @@ import Editor from '@monaco-editor/react';
 import Loader from './Loader';
 
 const defaultCode = {
-    cpp: `#include <iostream>\nusing namespace std;\nint main() {\n    // Your code here\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}`,
+    cpp: `#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Your code here\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}`,
     javascript: `// Your code here\nconsole.log('Hello, World!');`,
 };
 

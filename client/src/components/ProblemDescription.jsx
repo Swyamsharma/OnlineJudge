@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 export default function ProblemDescription({ problem }) {
     const sampleTestcases = problem.testcases?.filter(tc => tc.isSample) || [];
 
@@ -16,9 +18,10 @@ export default function ProblemDescription({ problem }) {
                 </span>
             </div>
 
-            <div className="prose prose-sm prose-invert max-w-none mb-6">
-                <p>{problem.statement}</p>
-            </div>
+            <div
+                className="prose prose-sm prose-invert max-w-none mb-6"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.statement) }}
+            ></div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
@@ -27,13 +30,19 @@ export default function ProblemDescription({ problem }) {
                 </div>
                 <div>
                     <h3 className="font-semibold text-md mb-2 text-text-primary">Output Format</h3>
-                    <p className="text-sm">{problem.outputFormat}</p>
+                    <div 
+                        className="prose prose-sm prose-invert max-w-none" 
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.outputFormat) }}
+                    ></div>
                 </div>
             </div>
 
             <div className="mb-6">
                 <h3 className="font-semibold text-md mb-2 text-text-primary">Constraints</h3>
-                <pre className="bg-secondary p-3 rounded-md text-sm whitespace-pre-wrap">{problem.constraints}</pre>
+                <pre 
+                    className="bg-secondary p-3 rounded-md text-sm whitespace-pre-wrap prose prose-sm prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.constraints) }}
+                ></pre>
             </div>
             
             {sampleTestcases.map((tc, index) => (
