@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getProblem, reset } from '../features/problems/problemSlice';
 import problemService from '../features/problems/problemService';
 import { store } from '../store/store';
@@ -9,6 +9,8 @@ import Loader from '../components/Loader';
 import ProblemDescription from '../components/ProblemDescription';
 import CodeEditor from '../components/CodeEditor';
 import ExecutionPanel from '../components/ExecutionPanel';
+import { toast } from 'react-hot-toast';
+import DOMPurify from 'dompurify';
 
 const VerticalHandleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400">
@@ -23,8 +25,11 @@ const HorizontalHandleIcon = () => (
 
 export default function ProblemDetailPage() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { id } = useParams();
     const { problem, isLoading: isProblemLoading, isError, message } = useSelector((state) => state.problem);
+    
+    const { user } = useSelector((state) => state.auth); 
 
     const [customInput, setCustomInput] = useState('');
     const [executionResult, setExecutionResult] = useState({ output: null, stderr: null, verdict: null, isLoading: false });
@@ -39,6 +44,27 @@ export default function ProblemDetailPage() {
     }, [dispatch, id, isError, message]);
 
     const handleRunCode = useCallback(async ({ language, code }) => {
+        if (!user) {
+            toast.error(
+                (t) => (
+                  <span className='flex items-center'>
+                    Please log in to run code.
+                    <button
+                      className="ml-3 px-3 py-1.5 text-sm font-semibold rounded-md bg-accent text-white hover:bg-accent-hover"
+                      onClick={() => {
+                        navigate('/login');
+                        toast.dismiss(t.id);
+                      }}
+                    >
+                      Login
+                    </button>
+                  </span>
+                ),
+                { duration: 5000 }
+            );
+            return;
+        }
+
         setExecutionResult({ output: null, stderr: null, verdict: null, isLoading: true });
         setActiveBottomTab('result');
 
@@ -54,7 +80,7 @@ export default function ProblemDetailPage() {
                 isLoading: false,
             });
         }
-    }, [customInput]);
+    }, [customInput, user, navigate]);
 
     const handleCustomInputChange = useCallback((input) => {
         setCustomInput(input);
@@ -64,11 +90,18 @@ export default function ProblemDetailPage() {
         return <Loader />;
     }
 
+    const sanitizedProblem = {
+        ...problem,
+        statement: DOMPurify.sanitize(problem.statement),
+        outputFormat: DOMPurify.sanitize(problem.outputFormat),
+        constraints: DOMPurify.sanitize(problem.constraints),
+    };
+
     return (
         <div className="h-full w-full">
             <PanelGroup direction="horizontal">
                 <Panel defaultSize={50} minSize={30}>
-                    <ProblemDescription problem={problem} />
+                    <ProblemDescription problem={sanitizedProblem} /> 
                 </Panel>
                 <PanelResizeHandle className="ResizeHandleOuter">
                     <VerticalHandleIcon />

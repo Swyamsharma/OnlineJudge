@@ -1,7 +1,26 @@
 import { useState, useEffect } from 'react';
 
+// A helper function to get the right color for each verdict
+const getVerdictColor = (verdict) => {
+    switch (verdict) {
+        case 'Success':
+            return 'text-green-400';
+        case 'Time Limit Exceeded':
+        case 'Memory Limit Exceeded':
+            return 'text-orange-400';
+        case 'Compilation Error':
+        case 'Runtime Error':
+        case 'System Error':
+            return 'text-red-400';
+        default:
+            return 'text-yellow-400'; // For any other status
+    }
+};
+
 export default function ExecutionPanel({ executionResult, onCustomInputChange, activeTab, setActiveTab }) {
-    const { output, stderr, error: verdict, isLoading } = executionResult;
+    // ** THE MAIN FIX IS HERE **
+    // Changed `error: verdict` to just `verdict`
+    const { output, stderr, verdict, isLoading } = executionResult;
     const [customInput, setCustomInput] = useState('');
 
     useEffect(() => {
@@ -35,7 +54,7 @@ export default function ExecutionPanel({ executionResult, onCustomInputChange, a
                              <div className="space-y-4">
                                 {verdict && (
                                     <div>
-                                        <h4 className={`font-semibold ${verdict === 'Success' ? 'text-green-400' : 'text-red-400'}`}>Status: {verdict}</h4>
+                                        <h4 className={`font-semibold ${getVerdictColor(verdict)}`}>Status: {verdict}</h4>
                                     </div>
                                 )}
                                 <div>

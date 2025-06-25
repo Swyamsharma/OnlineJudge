@@ -23,7 +23,7 @@ function LoginPage() {
         if (isError) {
             toast.error(message);
         }
-        if (user) {
+        if (isSuccess && user) {
             toast.success('Logged in successfully!');
             navigate('/');
         }

@@ -14,7 +14,7 @@ const docker = new Docker();
 const executeCode = async (language, code, input) => {
     console.log(`[Exec] Starting execution for language: ${language}`);
 
-    const timeout = 8000;
+    const timeout = 5000;
 
     const tempDir = path.join('/tmp', `code-execution-${crypto.randomUUID()}`);
     await fs.mkdir(tempDir, { recursive: true });
@@ -23,6 +23,7 @@ const executeCode = async (language, code, input) => {
 
     try {
         let containerConfig;
+        const memoryLimit = 256 * 1024 * 1024; // 256MB
 
         if (language === 'cpp') {
             const codeFilePath = path.join(tempDir, 'main.cpp');
@@ -35,7 +36,7 @@ const executeCode = async (language, code, input) => {
                 Cmd: cmd,
                 HostConfig: {
                     Binds: [`${tempDir}:/app:ro`],
-                    Memory: 256 * 1024 * 1024,
+                    Memory: memoryLimit,
                     CpuCount: 1,
                 },
             };
@@ -51,7 +52,7 @@ const executeCode = async (language, code, input) => {
                 Cmd: cmd,
                 HostConfig: {
                     Binds: [`${tempDir}:/app:ro`],
-                    Memory: 256 * 1024 * 1024,
+                    Memory: memoryLimit,
                     CpuCount: 1,
                 },
             };
@@ -97,11 +98,19 @@ const executeCode = async (language, code, input) => {
             else stderr += payload;
             offset += length;
         }
+
         if (statusCode !== 0) {
+            if (statusCode === 137) {
+                return { output: stdout, verdict: 'Memory Limit Exceeded', stderr: 'Process was killed for exceeding memory limits.' };
+            }
+            if (statusCode === 139) {
+                return { output: stdout, verdict: 'Runtime Error', stderr: 'Segmentation Fault. This often indicates infinite recursion (stack overflow), accessing an invalid memory address, or going out of array bounds.' };
+            }
             if (stderr.includes('g++:') || stderr.includes('SyntaxError')) {
                 return { output: stdout, verdict: 'Compilation Error', stderr };
             }
-            return { output: stdout, verdict: 'Runtime Error', stderr };
+            const finalStderr = stderr || `Process exited with a non-zero status code: ${statusCode}.`;
+            return { output: stdout, verdict: 'Runtime Error', stderr: finalStderr };
         } else {
             return { output: stdout, verdict: 'Success', stderr };
         }
