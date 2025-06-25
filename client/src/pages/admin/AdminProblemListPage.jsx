@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { getProblems, reset, deleteProblem } from '../../features/problems/problemSlice';
 import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
-import ConfirmationModal from '../../components/ConfirmationModal'; // Import the modal
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 function AdminProblemListPage() {
     const dispatch = useDispatch();

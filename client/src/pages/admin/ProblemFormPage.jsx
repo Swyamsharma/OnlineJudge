@@ -14,7 +14,6 @@ function ProblemFormPage() {
 
     const { problem, isLoading, isError, message } = useSelector(state => state.problem);
 
-    // This flag prevents form data from being overwritten by Redux state updates after initial load.
     const [isDataLoaded, setIsDataLoaded] = useState(false);
 
     const [formData, setFormData] = useState({

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-// A helper function to get the right color for each verdict
 const getVerdictColor = (verdict) => {
     switch (verdict) {
         case 'Success':
@@ -13,13 +12,11 @@ const getVerdictColor = (verdict) => {
         case 'System Error':
             return 'text-red-400';
         default:
-            return 'text-yellow-400'; // For any other status
+            return 'text-yellow-400';
     }
 };
 
 export default function ExecutionPanel({ executionResult, onCustomInputChange, activeTab, setActiveTab }) {
-    // ** THE MAIN FIX IS HERE **
-    // Changed `error: verdict` to just `verdict`
     const { output, stderr, verdict, isLoading } = executionResult;
     const [customInput, setCustomInput] = useState('');
 
