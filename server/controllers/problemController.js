@@ -1,6 +1,6 @@
 import axios from "axios";
 import Problem from "../models/problemModel.js";
-import Testcase from "../models/testcaseModel.js";
+import Testcase from '../models/testcaseModel.js';
 
 // @desc    Create a new problem with test cases
 // @route   POST /api/problems
@@ -148,26 +148,19 @@ export const deleteProblem = async (req, res) => {
 // @desc    Run code against custom input
 // @route   POST /api/problems/run
 // @access  Private
-export const runCode = async (req, res, next) => {
+export const runCode = async (req, res) => {
     const { language, code, input } = req.body;
     const EVALUATION_SERVICE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001/run';
 
     try {
-        const response = await axios.post(EVALUATION_SERVICE_URL, {
-            language,
-            code,
-            input
-        },
-        {
-            timeout: 10000,
-        }
-    );
+        const response = await axios.post(EVALUATION_SERVICE_URL, { language, code, input }, { timeout: 10000 });
         res.status(200).json(response.data);
     } catch (error) {
-        console.error("Error calling evaluation service:", error.message);
-        res.status(503).json({ 
+        const status = error.response?.status || 503;
+        const data = error.response?.data || {
             error: 'Service Unavailable',
-            message: 'The code evaluation service is temporarily down. Please try again later.' 
-        });
+            message: 'The evaluation service is temporarily down or did not respond in time.'
+        };
+        res.status(status).json(data);
     }
 };

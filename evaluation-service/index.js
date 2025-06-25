@@ -1,156 +1,59 @@
 import express from 'express';
 import cors from 'cors';
-import Docker from 'dockerode';
-import { promises as fs } from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import amqp from 'amqplib';
+import mongoose from 'mongoose';
+import Submission from './models/submissionModel.js'; 
+import Testcase from './models/testcaseModel.js';
+import { executeSingleRun, executeCodeAgainstTestcases } from './executionEngine.js';
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const docker = new Docker();
-
-const executeCode = async (language, code, input) => {
-    console.log(`[Exec] Starting execution for language: ${language}`);
-
-    const timeout = 5000;
-
-    const tempDir = path.join('/tmp', `code-execution-${crypto.randomUUID()}`);
-    await fs.mkdir(tempDir, { recursive: true });
-
-    let container;
-
-    try {
-        let containerConfig;
-        const memoryLimit = 256 * 1024 * 1024; // 256MB
-
-        if (language === 'cpp') {
-            const codeFilePath = path.join(tempDir, 'main.cpp');
-            await fs.writeFile(codeFilePath, code);
-
-            const cmd = ['/bin/bash', '-c', 'cd /app && g++ main.cpp -o /tmp/main && /tmp/main'];
-
-            containerConfig = {
-                Image: 'gcc',
-                Cmd: cmd,
-                HostConfig: {
-                    Binds: [`${tempDir}:/app:ro`],
-                    Memory: memoryLimit,
-                    CpuCount: 1,
-                },
-            };
-
-        } else if (language === 'javascript') {
-            const codeFilePath = path.join(tempDir, 'index.js');
-            await fs.writeFile(codeFilePath, code);
-
-            const cmd = ['node', '/app/index.js'];
-
-            containerConfig = {
-                Image: 'node:alpine',
-                Cmd: cmd,
-                HostConfig: {
-                    Binds: [`${tempDir}:/app:ro`],
-                    Memory: memoryLimit,
-                    CpuCount: 1,
-                },
-            };
-        } else {
-            throw new Error(`Language ${language} is not supported.`);
-        }
-
-        container = await docker.createContainer({
-            ...containerConfig,
-            AttachStdin: true,
-            AttachStdout: true,
-            AttachStderr: true,
-            Tty: false,
-            OpenStdin: true,
-            StdinOnce: true,
-        });
-
-        const stream = await container.attach({ stream: true, stdin: true, stdout: true, stderr: true });
-
-        await container.start();
-
-        stream.write(input || '');
-        stream.end();
-
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Time Limit Exceeded')), timeout)
-        );
-
-        const executionPromise = container.wait();
-        const data = await Promise.race([executionPromise, timeoutPromise]);
-
-        const statusCode = data.StatusCode;
-        const logBuffer = await container.logs({ follow: false, stdout: true, stderr: true });
-        let stdout = '';
-        let stderr = '';
-        let offset = 0;
-        while (offset < logBuffer.length) {
-            const type = logBuffer[offset];
-            const length = logBuffer.readUInt32BE(offset + 4);
-            offset += 8;
-            const payload = logBuffer.slice(offset, offset + length).toString('utf8');
-            if (type === 1) stdout += payload;
-            else stderr += payload;
-            offset += length;
-        }
-
-        if (statusCode !== 0) {
-            if (statusCode === 137) {
-                return { output: stdout, verdict: 'Memory Limit Exceeded', stderr: 'Process was killed for exceeding memory limits.' };
-            }
-            if (statusCode === 139) {
-                return { output: stdout, verdict: 'Runtime Error', stderr: 'Segmentation Fault. This often indicates infinite recursion (stack overflow), accessing an invalid memory address, or going out of array bounds.' };
-            }
-            if (stderr.includes('g++:') || stderr.includes('SyntaxError')) {
-                return { output: stdout, verdict: 'Compilation Error', stderr };
-            }
-            const finalStderr = stderr || `Process exited with a non-zero status code: ${statusCode}.`;
-            return { output: stdout, verdict: 'Runtime Error', stderr: finalStderr };
-        } else {
-            return { output: stdout, verdict: 'Success', stderr };
-        }
-
-    } catch (err) {
-        console.error("Error during Docker operation:", err);
-        if (err.message === 'Time Limit Exceeded') {
-            return { output: '', stderr: 'Execution timed out.', verdict: 'Time Limit Exceeded' };
-        }
-        throw err;
-    } finally {
-        if (container) {
-            await container.remove({ force: true }).catch(err => console.error("Failed to remove container:", err.message));
-        }
-        await fs.rm(tempDir, { recursive: true, force: true }).catch(err => console.error("Failed to remove temp directory:", err.message));
-        console.log(`[Exec] Cleaned up resources for execution in ${tempDir}`);
-    }
-};
-
-app.post('/run', async (req, res) => {
-    console.log('[EvalSvc] /run endpoint hit');
-    const { language, code, input } = req.body;
-
-    if (!code || !language) {
-        return res.status(400).json({ error: 'Language and code are required.' });
-    }
-
-    try {
-        const result = await executeCode(language, code, input);
-        res.status(200).json(result);
-    } catch (error) {
-        res.status(500).json({
-            error: 'Evaluation Failed',
-            message: error.message,
-            verdict: 'System Error'
-        });
-    }
-});
-
+const { MONGODB_URI, RABBITMQ_URI, RESULT_EXCHANGE } = process.env;
 const PORT = process.env.EVAL_PORT || 5001;
-app.listen(PORT, () => {
-    console.log(`Evaluation service listening on port ${PORT}`);
-});
+const SUBMISSION_QUEUE = 'submission_queue';
+
+async function startWorker() {
+    try {
+        await mongoose.connect(MONGODB_URI);
+        console.log('[EvalSvc-Worker] DB Connected.');
+        const connection = await amqp.connect(RABBITMQ_URI);
+        const channel = await connection.createChannel();
+        await channel.assertQueue(SUBMISSION_QUEUE, { durable: true });
+        await channel.assertExchange(RESULT_EXCHANGE, 'fanout', { durable: false });
+        channel.prefetch(1);
+        console.log('[EvalSvc-Worker] Waiting for submission jobs.');
+        channel.consume(SUBMISSION_QUEUE, async (msg) => {
+            if (!msg) return;
+            const { submissionId } = JSON.parse(msg.content.toString());
+            try {
+                const submission = await Submission.findById(submissionId);
+                const testcases = await Testcase.find({ problemId: submission.problemId });
+                const result = await executeCodeAgainstTestcases(submission.language, submission.code, testcases);
+                await Submission.findByIdAndUpdate(submissionId, { verdict: result.verdict, executionTime: result.executionTime, memoryUsed: result.memoryUsed });
+                const resultMsg = JSON.stringify({ submissionId: submission._id, userId: submission.userId, verdict: result.verdict });
+                channel.publish(RESULT_EXCHANGE, '', Buffer.from(resultMsg));
+            } catch (err) {
+                await Submission.findByIdAndUpdate(submissionId, { verdict: 'System Error' }).catch(()=>{});
+                console.error(`[EvalSvc-Worker] Error on ${submissionId}:`, err);
+            } finally {
+                channel.ack(msg);
+            }
+        });
+    } catch (err) {
+        console.error('[EvalSvc-Worker] Startup failed, retrying in 5s...', err);
+        setTimeout(startWorker, 5000);
+    }
+}
+
+function startApiServer() {
+    const app = express();
+    app.use(cors());
+    app.use(express.json());
+    app.post('/run', async (req, res) => {
+        const { language, code, input } = req.body;
+        const result = await executeSingleRun(language, code, input);
+        res.status(200).json(result);
+    });
+    app.listen(PORT, () => console.log(`[EvalSvc-API] Listening on port ${PORT}`));
+}
+
+startWorker();
+startApiServer();
