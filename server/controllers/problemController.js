@@ -153,7 +153,7 @@ export const runCode = async (req, res) => {
     const EVALUATION_SERVICE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001/run';
 
     try {
-        const response = await axios.post(EVALUATION_SERVICE_URL, { language, code, input }, { timeout: 10000 });
+        const response = await axios.post(EVALUATION_SERVICE_URL, { language, code, input }, { timeout: 15000 });
         res.status(200).json(response.data);
     } catch (error) {
         const status = error.response?.status || 503;

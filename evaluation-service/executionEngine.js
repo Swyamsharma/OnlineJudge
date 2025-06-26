@@ -89,7 +89,7 @@ async function runInContainer(language, code, input) {
         return { verdict: 'System Error', stderr: err.message };
     } finally {
         if (container) {
-            await container.stop().catch(() => {});
+            await container.stop({t: 2}).catch(() => {});
             await container.remove({ force: true }).catch(() => {});
         }
         if(executionPath) {
