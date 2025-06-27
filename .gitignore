@@ -26,3 +26,4 @@ dist-ssr
 *.config.js
 */.env
 *.env
+ThingsToAddBeforeDeployment.txt

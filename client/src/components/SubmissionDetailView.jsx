@@ -39,8 +39,6 @@ export default function SubmissionDetailView({ submission }) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard label="Runtime" value={submission.executionTime} unit=" ms" />
-                <StatCard label="Memory" value={submission.memoryUsed} unit=" KB" />
                 <StatCard label="Language" value={submission.language} />
             </div>
 
