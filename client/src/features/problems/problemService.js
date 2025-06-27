@@ -83,12 +83,24 @@ const runCode = async (runData, thunkAPI) => {
     return response.data;
 };
 
+const runSampleTests = async (runData, thunkAPI) => {
+    const { problemId, language, code } = runData;
+    const config = {
+        headers: {
+            Authorization: `Bearer ${thunkAPI.getState().auth.user.token}`,
+        },
+    };
+    const response = await axios.post(`${API_BASE_URL}/${problemId}/run-samples`, { language, code }, config);
+    return response.data;
+};
+
 const problemService = {
     createProblem,
     getProblems,
     getProblem,
     updateProblem,
     deleteProblem,
-    runCode
+    runCode,
+    runSampleTests
 };
 export default problemService;

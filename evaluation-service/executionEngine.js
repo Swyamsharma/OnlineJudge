@@ -96,13 +96,13 @@ async function runInContainer(language, code, input) {
             await fs.rm(executionPath, { recursive: true, force: true }).catch(() => {});
         }
     }
-}
+};
 
-
+//to run against single custom input
 export const executeSingleRun = async (language, code, input) => {
     return await runInContainer(language, code, input);
 };
-
+//to run against all test cases
 export const executeCodeAgainstTestcases = async (language, code, testcases) => {
     let maxTime = 0, maxMemory = 0;
     for (const testcase of testcases) {
@@ -113,4 +113,27 @@ export const executeCodeAgainstTestcases = async (language, code, testcases) => 
         if (result.memoryUsed > maxMemory) maxMemory = result.memoryUsed;
     }
     return { verdict: 'Accepted', executionTime: maxTime, memoryUsed: maxMemory };
+};
+//to run against sample test cases
+export const executeAndCollectResults = async (language, code, testcases) => {
+    const results = [];
+    let caseNum = 1;
+    for (const testcase of testcases) {
+        const result = await runInContainer(language, code, testcase.input);
+        
+        let finalVerdict = result.verdict;
+        if (result.verdict === 'Success') {
+            finalVerdict = result.output.trim() === testcase.expectedOutput.trim() ? 'Passed' : 'Wrong Answer';
+        }
+        
+        results.push({
+            case: caseNum++,
+            input: testcase.input,
+            expectedOutput: testcase.expectedOutput,
+            actualOutput: result.output,
+            verdict: finalVerdict,
+            stderr: result.stderr,
+        });
+    }
+    return results;
 };

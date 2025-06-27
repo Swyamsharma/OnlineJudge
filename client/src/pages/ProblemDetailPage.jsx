@@ -28,7 +28,7 @@ export default function ProblemDetailPage() {
     const { user } = useSelector((state) => state.auth); 
 
     const [customInput, setCustomInput] = useState('');
-    const [executionResult, setExecutionResult] = useState({ isLoading: false });
+    const [executionResult, setExecutionResult] = useState({ isLoading: false, data: null, type: null });
     const [activeBottomTab, setActiveBottomTab] = useState('input');
 
     useEffect(() => {
@@ -56,15 +56,28 @@ export default function ProblemDetailPage() {
 
     const handleRunCode = useCallback(async ({ language, code }) => {
         if (!user) { showLoginToast(); return; }
-        setExecutionResult({ isLoading: true });
         setActiveBottomTab('result');
-        try {
-            const result = await problemService.runCode({ language, code, input: customInput }, { getState: store.getState });
-            setExecutionResult({ ...result, isLoading: false });
-        } catch (error) {
-            setExecutionResult({ verdict: 'Client Error', stderr: error.message, isLoading: false });
+
+        if (customInput.trim() !== '') {
+            setExecutionResult({ isLoading: true, data: null, type: 'custom' });
+            try {
+                const result = await problemService.runCode({ language, code, input: customInput }, { getState: store.getState });
+                setExecutionResult({ isLoading: false, data: result, type: 'custom' });
+            } catch (error) {
+                const errorData = error.response?.data || { verdict: 'Client Error', stderr: error.message };
+                setExecutionResult({ isLoading: false, data: errorData, type: 'custom' });
+            }
+        } else {
+            setExecutionResult({ isLoading: true, data: null, type: 'samples' });
+            try {
+                const resultData = await problemService.runSampleTests({ problemId, language, code }, { getState: store.getState });
+                setExecutionResult({ isLoading: false, data: resultData, type: 'samples' });
+            } catch (error) {
+                const errorData = error.response?.data || { verdict: 'Client Error', stderr: error.message };
+                setExecutionResult({ isLoading: false, data: errorData, type: 'custom' });
+            }
         }
-    }, [customInput, user, showLoginToast]);
+    }, [customInput, user, showLoginToast, problemId]);
 
     const handleCodeSubmit = useCallback(async ({ language, code }) => {
         if (!user) { showLoginToast(); return; }

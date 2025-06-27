@@ -4,7 +4,7 @@ import amqp from 'amqplib';
 import mongoose from 'mongoose';
 import Submission from './models/submissionModel.js'; 
 import Testcase from './models/testcaseModel.js';
-import { executeSingleRun, executeCodeAgainstTestcases } from './executionEngine.js';
+import { executeSingleRun, executeCodeAgainstTestcases, executeAndCollectResults } from './executionEngine.js';
 
 const { MONGODB_URI, RABBITMQ_URI, RESULT_EXCHANGE } = process.env;
 const PORT = process.env.EVAL_PORT || 5001;
@@ -51,6 +51,14 @@ function startApiServer() {
         const { language, code, input } = req.body;
         const result = await executeSingleRun(language, code, input);
         res.status(200).json(result);
+    });
+    app.post('/run-multiple', async (req, res) => {
+        const { language, code, testcases } = req.body;
+        if (!language || typeof code === 'undefined' || !Array.isArray(testcases)) {
+            return res.status(400).json({ message: 'Missing language, code, or testcases array.' });
+        }
+        const results = await executeAndCollectResults(language, code, testcases);
+        res.status(200).json(results);
     });
     app.listen(PORT, () => console.log(`[EvalSvc-API] Listening on port ${PORT}`));
 }

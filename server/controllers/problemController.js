@@ -164,3 +164,53 @@ export const runCode = async (req, res) => {
         res.status(status).json(data);
     }
 };
+
+// @desc    Run code against all sample test cases for a problem
+// @route   POST /api/problems/:id/run-samples
+// @access  Private
+export const runSampleTests = async (req, res) => {
+    console.log('[CONTROLLER] Entered runSampleTests');
+    const { language, code } = req.body;
+    const { id: problemId } = req.params;
+    const EVALUATION_SERVICE_BASE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001';
+
+    try {
+        console.log(`[CONTROLLER] Fetching sample testcases for problemId: ${problemId}`);
+        const sampleTestcases = await Testcase.find({ problemId, isSample: true }).select('input expectedOutput');
+        
+        console.log(`[CONTROLLER] Found ${sampleTestcases.length} sample testcases.`);
+
+        if (!sampleTestcases || sampleTestcases.length === 0) {
+            console.log('[CONTROLLER] No sample testcases found. Responding to client.');
+            return res.status(200).json({
+                message: "No sample testcases available to run."
+            });
+        }
+        
+        const payload = {
+            language,
+            code,
+            testcases: sampleTestcases.map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+        };
+
+        console.log('[CONTROLLER] Sending payload to evaluation-service at:', `${EVALUATION_SERVICE_BASE_URL}/run-multiple`);
+
+        const response = await axios.post(`${EVALUATION_SERVICE_BASE_URL}/run-multiple`, payload, { timeout: 30000 });
+
+        console.log('[CONTROLLER] Received response from evaluation-service. Status:', response.status);
+        console.log('[CONTROLLER] Responding to client with data:', response.data);
+        res.status(200).json(response.data);
+
+    } catch (error) {
+        console.error('[CONTROLLER] An error occurred in runSampleTests:', error);
+
+        const status = error.response?.status || 503;
+        const data = error.response?.data || {
+            verdict: 'Service Error',
+            stderr: 'The evaluation service is temporarily down or did not respond in time.'
+        };
+
+        console.error(`[CONTROLLER] Responding with error. Status: ${status}, Data:`, data);
+        res.status(status).json(data);
+    }
+};
