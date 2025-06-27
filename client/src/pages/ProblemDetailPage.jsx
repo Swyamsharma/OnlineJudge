@@ -1,62 +1,61 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getProblem, reset as resetProblem } from '../features/problems/problemSlice';
-import { createSubmission, getSubmissions, updateSubmission, reset as resetSubmission } from '../features/submissions/submissionSlice';
+import { createSubmission, getSubmissions, updateSubmission, getSubmissionDetail, reset as resetSubmission, resetSelected } from '../features/submissions/submissionSlice';
 import problemService from '../features/problems/problemService';
 import { store } from '../store/store';
 import io from 'socket.io-client';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import Loader from '../components/Loader';
-import ProblemDescription from '../components/ProblemDescription';
+import InfoPanel from '../components/InfoPanel'; // Renamed
 import CodeEditor from '../components/CodeEditor';
 import ExecutionPanel from '../components/ExecutionPanel';
 import { toast } from 'react-hot-toast';
-import DOMPurify from 'dompurify';
 
 const VerticalHandleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400"><path d="M10.5 6a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 10.5 6Zm3.75.75a.75.75 0 0 0-1.5 0v10.5a.75.75 0 0 0 1.5 0V6.75Z" /></svg>);
 const HorizontalHandleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400"><path d="M18 10.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1 0-1.5h10.5a.75.75 0 0 1 .75.75Zm-.75 3.75a.75.75 0 0 0 0-1.5H6.75a.75.75 0 0 0 0 1.5h10.5Z" /></svg>);
 
-
 export default function ProblemDetailPage() {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const { id: problemId } = useParams();
     
     const { problem, isLoading: isProblemLoading } = useSelector((state) => state.problem);
-    const { submissions, isSubmitting, isFetching: isFetchingSubmissions } = useSelector((state) => state.submission);
+    const { submissions, isSubmitting, isFetching: isFetchingSubmissions, selectedSubmission, isFetchingDetail } = useSelector((state) => state.submission);
     const { user } = useSelector((state) => state.auth); 
 
     const [customInput, setCustomInput] = useState('');
     const [executionResult, setExecutionResult] = useState({ isLoading: false, data: null, type: null });
-    const [activeBottomTab, setActiveBottomTab] = useState('input');
+    const [leftPanelTab, setLeftPanelTab] = useState('description');
+    const [rightPanelTab, setRightPanelTab] = useState('input');
 
     useEffect(() => {
         dispatch(getProblem(problemId));
         if (user) {
             dispatch(getSubmissions(problemId));
-            
             const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
             socket.emit('register', user.token);
-
             socket.on('submission:update', (updatedSubmission) => {
                 dispatch(updateSubmission(updatedSubmission));
-                toast.success(`Submission verdict: ${updatedSubmission.verdict}`, { id: 'verdict-toast' });
+                toast.success(`Submission verdict: ${updatedSubmission.verdict}`, { id: `verdict-toast-${updatedSubmission._id}` });
             });
-
             return () => {
                 socket.disconnect();
                 dispatch(resetProblem());
                 dispatch(resetSubmission());
             };
         }
+        // On component unmount, reset selected submission view
+        return () => dispatch(resetSelected());
     }, [dispatch, problemId, user]);
     
     const showLoginToast = useCallback(() => toast.error("Please log in to perform this action."), []);
 
     const handleRunCode = useCallback(async ({ language, code }) => {
         if (!user) { showLoginToast(); return; }
-        setActiveBottomTab('result');
+        setRightPanelTab('result');
+        setLeftPanelTab('description'); // Go back to description on run
+        dispatch(resetSelected());
 
         if (customInput.trim() !== '') {
             setExecutionResult({ isLoading: true, data: null, type: 'custom' });
@@ -77,30 +76,34 @@ export default function ProblemDetailPage() {
                 setExecutionResult({ isLoading: false, data: errorData, type: 'custom' });
             }
         }
-    }, [customInput, user, showLoginToast, problemId]);
+    }, [customInput, user, showLoginToast, problemId, dispatch]);
 
     const handleCodeSubmit = useCallback(async ({ language, code }) => {
         if (!user) { showLoginToast(); return; }
-        setActiveBottomTab('submissions');
+        setRightPanelTab('submissions');
         dispatch(createSubmission({ problemId, language, code }));
     }, [user, dispatch, problemId, showLoginToast]);
 
+    const handleSubmissionSelect = useCallback((submissionId) => {
+        dispatch(getSubmissionDetail(submissionId));
+        setLeftPanelTab('submission');
+    }, [dispatch]);
+
     const handleCustomInputChange = useCallback((input) => setCustomInput(input), []);
 
-
     if (isProblemLoading || !problem.title) return <Loader />;
-    const sanitizedProblem = {
-        ...problem,
-        statement: DOMPurify.sanitize(problem.statement),
-        outputFormat: DOMPurify.sanitize(problem.outputFormat),
-        constraints: DOMPurify.sanitize(problem.constraints),
-    };
 
     return (
         <div className="h-full w-full">
             <PanelGroup direction="horizontal">
                 <Panel defaultSize={50} minSize={30}>
-                    <ProblemDescription problem={sanitizedProblem} /> 
+                    <InfoPanel 
+                        problem={problem} 
+                        activeTab={leftPanelTab}
+                        setActiveTab={setLeftPanelTab}
+                        selectedSubmission={selectedSubmission}
+                        isFetchingDetail={isFetchingDetail}
+                    /> 
                 </Panel>
                 <PanelResizeHandle className="ResizeHandleOuter"><VerticalHandleIcon /></PanelResizeHandle>
                 <Panel defaultSize={50} minSize={30}>
@@ -118,10 +121,11 @@ export default function ProblemDetailPage() {
                             <ExecutionPanel 
                                 executionResult={executionResult}
                                 onCustomInputChange={handleCustomInputChange}
-                                activeTab={activeBottomTab}
-                                setActiveTab={setActiveBottomTab}
+                                activeTab={rightPanelTab}
+                                setActiveTab={setRightPanelTab}
                                 submissions={submissions}
                                 isFetchingSubmissions={isFetchingSubmissions}
+                                onSubmissionSelect={handleSubmissionSelect}
                             />
                         </Panel>
                     </PanelGroup>
