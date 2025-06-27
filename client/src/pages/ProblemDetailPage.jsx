@@ -8,7 +8,7 @@ import { store } from '../store/store';
 import io from 'socket.io-client';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import Loader from '../components/Loader';
-import InfoPanel from '../components/InfoPanel'; // Renamed
+import InfoPanel from '../components/InfoPanel';
 import CodeEditor from '../components/CodeEditor';
 import ExecutionPanel from '../components/ExecutionPanel';
 import { toast } from 'react-hot-toast';
@@ -45,7 +45,6 @@ export default function ProblemDetailPage() {
                 dispatch(resetSubmission());
             };
         }
-        // On component unmount, reset selected submission view
         return () => dispatch(resetSelected());
     }, [dispatch, problemId, user]);
     
@@ -54,7 +53,7 @@ export default function ProblemDetailPage() {
     const handleRunCode = useCallback(async ({ language, code }) => {
         if (!user) { showLoginToast(); return; }
         setRightPanelTab('result');
-        setLeftPanelTab('description'); // Go back to description on run
+        setLeftPanelTab('description');
         dispatch(resetSelected());
 
         if (customInput.trim() !== '') {

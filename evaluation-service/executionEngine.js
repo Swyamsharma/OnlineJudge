@@ -7,7 +7,15 @@ const docker = new Docker();
 
 // The path *inside the worker container* where the shared volume is mounted.
 const SHARED_VOLUME_PATH = path.join(process.cwd(), 'temp');
-
+const normalizeOutput = (str) => {
+    if (typeof str !== 'string') return '';
+    return str
+        .trim()
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .join('\n');
+};
 async function runInContainer(language, code, input) {
     const timeout = 5000;
     
@@ -107,8 +115,10 @@ export const executeCodeAgainstTestcases = async (language, code, testcases) => 
     let maxTime = 0, maxMemory = 0;
     for (const testcase of testcases) {
         const result = await runInContainer(language, code, testcase.input);
-        if (result.verdict !== 'Success') return result; // Fail fast
-        if (result.output.trim() !== testcase.expectedOutput.trim()) return { verdict: 'Wrong Answer' };
+        if (result.verdict !== 'Success') return result;
+         if (normalizeOutput(result.output) !== normalizeOutput(testcase.expectedOutput)) {
+            return { verdict: 'Wrong Answer' };
+        }
         if (result.executionTime > maxTime) maxTime = result.executionTime;
         if (result.memoryUsed > maxMemory) maxMemory = result.memoryUsed;
     }
@@ -123,7 +133,9 @@ export const executeAndCollectResults = async (language, code, testcases) => {
         
         let finalVerdict = result.verdict;
         if (result.verdict === 'Success') {
-            finalVerdict = result.output.trim() === testcase.expectedOutput.trim() ? 'Passed' : 'Wrong Answer';
+            const normalizedActual = normalizeOutput(result.output);
+            const normalizedExpected = normalizeOutput(testcase.expectedOutput);
+            finalVerdict = normalizedActual === normalizedExpected ? 'Passed' : 'Wrong Answer';
         }
         
         results.push({
