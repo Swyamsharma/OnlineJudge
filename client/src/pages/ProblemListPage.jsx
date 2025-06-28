@@ -19,9 +19,9 @@ function ProblemListPage() {
         };
     }, [dispatch, isError, message]);
 
-    if (isLoading) {
-        return <Loader />;
-    }
+    // if (isLoading) {
+    //     return <Loader />;
+    // }
 
     const difficultyColor = (difficulty) => {
         switch (difficulty) {
