@@ -18,9 +18,9 @@ const ActivityCalendar = ({ data, stats }) => {
 
     const getIntensityClass = (count) => {
         if (!count || count === 0) return 'bg-slate-700/50';
-        if (count <= 2) return 'bg-accent/10';
-        if (count <= 5) return 'bg-accent/30';
-        if (count <= 10) return 'bg-accent/70';
+        if (count <= 2) return 'bg-accent/50';
+        if (count <= 5) return 'bg-accent/70';
+        if (count <= 10) return 'bg-accent/90';
         return 'bg-accent';
     };
     
@@ -37,7 +37,6 @@ const ActivityCalendar = ({ data, stats }) => {
                 </div>
                 <div className="flex space-x-6 text-sm text-text-secondary">
                     <span>Total active days: <span className="text-text-primary font-semibold">{stats.activeDays || 0}</span></span>
-                    <span>Max streak: <span className="text-text-primary font-semibold">{stats.maxStreak || 0}</span></span>
                 </div>
             </div>
 

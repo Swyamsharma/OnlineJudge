@@ -1,25 +1,21 @@
-import { VscArrowSmallUp, VscVm, VscPass, VscCheckAll, VscFlame, VscBeaker } from "react-icons/vsc";
+import { VscArrowSmallUp, VscPass, VscCheckAll, VscFlame } from "react-icons/vsc";
 
 const iconMap = {
     solved: VscPass,
     submissions: VscCheckAll,
     acceptance: VscArrowSmallUp,
-    easy: VscBeaker,
-    medium: VscFlame,
-    hard: VscVm,
+    flame: VscFlame,
 };
 
 const colorMap = {
     solved: 'text-green-400',
     submissions: 'text-blue-400',
     acceptance: 'text-cyan-400',
-    easy: 'text-green-400',
-    medium: 'text-yellow-400',
-    hard: 'text-red-400',
+    flame: 'text-orange-400',
 }
 
 function StatCard({ title, value, icon, subValue, subTitle }) {
-    const IconComponent = iconMap[icon] || VscBeaker;
+    const IconComponent = iconMap[icon] || VscPass; 
     const colorClass = colorMap[icon] || 'text-text-primary';
 
     return (

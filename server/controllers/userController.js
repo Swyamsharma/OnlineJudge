@@ -7,6 +7,9 @@ import Problem from '../models/problemModel.js';
 export const getDashboardStats = async (req, res) => {
     try {
         const userId = req.user._id;
+        const allUserSubmissions = await Submission.find({ userId })
+            .populate('problemId', 'difficulty title');
+
         const totalProblemsByDifficulty = await Problem.aggregate([
             { $group: { _id: '$difficulty', count: { $sum: 1 } } }
         ]);
@@ -17,16 +20,15 @@ export const getDashboardStats = async (req, res) => {
                 totalProblems[group._id] = group.count;
             }
         });
+
         const oneYearAgo = new Date();
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-        const submissions = await Submission.find({ 
-            userId,
-            submittedAt: { $gte: oneYearAgo } 
-        }).populate('problemId', 'difficulty title').sort({ submittedAt: -1 });
-
+        const submissionsLastYear = allUserSubmissions.filter(sub => sub.submittedAt >= oneYearAgo);
+        submissionsLastYear.sort((a, b) => b.submittedAt - a.submittedAt);
+        
         const activityByDate = {};
-        submissions.forEach(sub => {
+        submissionsLastYear.forEach(sub => {
             const dateStr = sub.submittedAt.toISOString().split('T')[0];
             activityByDate[dateStr] = (activityByDate[dateStr] || 0) + 1;
         });
@@ -53,14 +55,14 @@ export const getDashboardStats = async (req, res) => {
             maxStreak = Math.max(maxStreak, currentStreak);
         }
 
-        const allSubmissions = await Submission.find({ userId });
-        const totalSubmissions = allSubmissions.length;
-        const acceptedSubmissions = allSubmissions.filter(s => s.verdict === 'Accepted');
+        const totalSubmissions = allUserSubmissions.length;
+        const acceptedSubmissions = allUserSubmissions.filter(s => s.verdict === 'Accepted');
 
         const solvedProblemIds = new Set();
         const difficultyCount = { Easy: 0, Medium: 0, Hard: 0 };
+
         acceptedSubmissions.forEach(sub => {
-            if (sub.problemId && sub.problemId._id) {
+            if (sub.problemId && sub.problemId._id) { 
                 const problemIdString = sub.problemId._id.toString();
                 if (!solvedProblemIds.has(problemIdString)) {
                     solvedProblemIds.add(problemIdString);
@@ -79,7 +81,7 @@ export const getDashboardStats = async (req, res) => {
             count: activityByDate[date],
         }));
 
-        const recentSubmissions = submissions.slice(0, 5).map(s => ({
+        const recentSubmissions = submissionsLastYear.slice(0, 5).map(s => ({
             _id: s._id,
             problemTitle: s.problemId.title,
             problemId: s.problemId._id,
@@ -96,7 +98,7 @@ export const getDashboardStats = async (req, res) => {
                 easySolved: difficultyCount.Easy,
                 mediumSolved: difficultyCount.Medium,
                 hardSolved: difficultyCount.Hard,
-                yearlySubmissions: submissions.length,
+                yearlySubmissions: submissionsLastYear.length,
                 activeDays: activeDates.length,
                 maxStreak,
                 totalProblems,

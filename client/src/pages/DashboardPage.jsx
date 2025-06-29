@@ -5,6 +5,7 @@ import Loader from '../components/Loader';
 import StatCard from '../components/dashboard/StatCard';
 import ActivityCalendar from '../components/dashboard/ActivityCalendar';
 import RecentSubmissions from '../components/dashboard/RecentSubmissions';
+import DifficultyChart from '../components/dashboard/DifficultyChart';
 import { toast } from 'react-hot-toast';
 
 function DashboardPage() {
@@ -14,7 +15,6 @@ function DashboardPage() {
 
     useEffect(() => {
         dispatch(getDashboardStats());
-
         return () => {
             dispatch(reset());
         }
@@ -26,11 +26,11 @@ function DashboardPage() {
         }
     }, [isError, message]);
 
-    // if (isLoading) {
-    //     return <Loader />;
-    // }
+    if (isLoading && !dashboardData) {
+        return <Loader />;
+    }
 
-    if (isError || !dashboardData) {
+    if (isError && !dashboardData) {
         return (
             <div className="max-w-7xl mx-auto w-full text-center p-8 bg-primary border border-border-color rounded-lg">
                 <h2 className="text-xl font-semibold text-red-400">Could not load dashboard</h2>
@@ -39,10 +39,14 @@ function DashboardPage() {
         );
     }
     
-    const { stats, activity, recentSubmissions } = dashboardData;
+    const { stats, activity, recentSubmissions } = dashboardData || { stats: {}, activity: [], recentSubmissions: [] };
+
+    if (!stats.totalProblems) {
+        return <Loader />;
+    }
 
     return (
-        <div className="max-w-7xl mx-auto w-full space-y-8">
+        <div className="max-w-7xl mx-auto w-full space-y-6">
             <div>
                 <h1 className="text-3xl font-bold text-text-primary">Welcome back, {user?.name}!</h1>
                 <p className="mt-1 text-text-secondary">Here's a snapshot of your progress. Keep up the great work.</p>
@@ -52,25 +56,20 @@ function DashboardPage() {
                 <StatCard title="Problems Solved" value={stats.problemsSolved} icon="solved" />
                 <StatCard title="Total Submissions" value={stats.totalSubmissions} icon="submissions" />
                 <StatCard title="Acceptance Rate" value={`${stats.acceptanceRate}%`} icon="acceptance" />
-                 <div className="bg-primary border border-border-color p-5 rounded-lg flex items-center justify-around">
-                    <div className="text-center">
-                        <p className="text-sm text-green-400">Easy</p>
-                        <p className="text-2xl font-bold text-text-primary">{stats.easySolved}</p>
-                    </div>
-                     <div className="text-center">
-                        <p className="text-sm text-yellow-400">Medium</p>
-                        <p className="text-2xl font-bold text-text-primary">{stats.mediumSolved}</p>
-                    </div>
-                     <div className="text-center">
-                        <p className="text-sm text-red-400">Hard</p>
-                        <p className="text-2xl font-bold text-text-primary">{stats.hardSolved}</p>
-                    </div>
-                </div>
+                <StatCard title="Max Streak" value={`${stats.maxStreak} ${stats.maxStreak === 1 ? 'day' : 'days'}`} icon="flame" />
             </div>
 
+            {/* --- Grid layout restored to original proportions --- */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-                <div className="bg-primary border border-border-color p-5 rounded-lg items-center justify-around lg:col-span-2">
-                    
+                <div className="lg:col-span-2">
+                    <DifficultyChart 
+                        solved={{
+                            easy: stats.easySolved,
+                            medium: stats.mediumSolved,
+                            hard: stats.hardSolved
+                        }}
+                        total={stats.totalProblems}
+                    />
                 </div>
                 <div className="lg:col-span-8">
                     <ActivityCalendar data={activity} stats={stats} />
