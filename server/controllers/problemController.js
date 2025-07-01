@@ -1,6 +1,14 @@
 import axios from "axios";
+import mongoose from "mongoose";
 import Problem from "../models/problemModel.js";
 import Testcase from '../models/testcaseModel.js';
+import { uploadToS3, deleteFromS3 } from "../utils/s3.js";
+
+const splitTestcases = (testcases) => {
+    const sampleCases = testcases.filter(tc => tc.isSample).map(({ input, expectedOutput, explanation }) => ({ input, expectedOutput, explanation }));
+    const hiddenCases = testcases.filter(tc => !tc.isSample);
+    return { sampleCases, hiddenCases };
+};
 
 // @desc    Create a new problem with test cases
 // @route   POST /api/problems
@@ -8,36 +16,48 @@ import Testcase from '../models/testcaseModel.js';
 export const createProblem = async (req, res) => {
     const { title, statement, difficulty, constraints, inputFormat, outputFormat, tags, testcases } = req.body;
 
+    if (!testcases || !Array.isArray(testcases) || testcases.length === 0) {
+        return res.status(400).json({ message: "A problem must have at least one test case." });
+    }
+
+    const { sampleCases, hiddenCases } = splitTestcases(testcases);
+
     try {
         const problem = await Problem.create({
-            title,
-            statement,
-            difficulty,
-            constraints,
-            inputFormat,
-            outputFormat,
-            tags,
-            addedBy: req.user._id 
+            title, statement, difficulty, constraints, inputFormat, outputFormat, tags,
+            sampleTestcases: sampleCases,
+            addedBy: req.user._id
         });
 
-        if (problem && testcases && testcases.length > 0) {
-            const testcasesToCreate = testcases.map(tc => ({
-                ...tc,
-                problemId: problem._id
-            }));
+        if (problem && hiddenCases.length > 0) {
+            const hiddenTestcasesToCreate = await Promise.all(hiddenCases.map(async (tc) => {
+                const testcaseId = new mongoose.Types.ObjectId();
+                const inputKey = `testcases/${problem._id}/${testcaseId}/input.txt`;
+                const outputKey = `testcases/${problem._id}/${testcaseId}/output.txt`;
 
-            await Testcase.insertMany(testcasesToCreate);
+                await Promise.all([
+                    uploadToS3(inputKey, tc.input),
+                    uploadToS3(outputKey, tc.expectedOutput)
+                ]);
+
+                return {
+                    _id: testcaseId,
+                    problemId: problem._id,
+                    inputS3Key: inputKey,
+                    outputS3Key: outputKey,
+                    isSample: false
+                };
+            }));
+            await Testcase.insertMany(hiddenTestcasesToCreate);
         }
         res.status(201).json(problem);
     } catch (error) {
-        res.status(400).json({
-            message: "Failed to create problem",
-            error: error.message
-        });
+        console.error("!!! FAILED TO CREATE PROBLEM !!!", error);
+        res.status(500).json({ message: "Failed to create problem", error: error.message });
     }
 };
 
-// @desc    Get all problems
+// @desc    Get all problems (summary view)
 // @route   GET /api/problems
 // @access  Public
 export const getProblems = async (req, res) => {
@@ -45,107 +65,125 @@ export const getProblems = async (req, res) => {
         const problems = await Problem.find({}).select("title difficulty tags");
         res.status(200).json(problems);
     } catch (error) {
-        res.status(500).json({
-            message: "Failed to fetch problems",
-            error: error.message
-        });
+        res.status(500).json({ message: "Failed to fetch problems", error: error.message });
     }
 };
 
-// @desc    Get a single problem by ID
+// @desc    Get a single problem by ID (with embedded sample cases)
 // @route   GET /api/problems/:id
-// @access  Public
+// @access  Public or Private (Admin gets more data)
 export const getProblemById = async (req, res) => {
     try {
         const problem = await Problem.findById(req.params.id);
-        if(problem){
-            const query = {problemId: problem._id};
-            if(req.user?.role !== 'admin'){
-                query.isSample = true;
-            }
-            const testcases = await Testcase.find(query);
-            res.status(200).json({ ...problem.toObject(), testcases });
-        } else {
-            res.status(404).json({
-                message: "Problem not found"
-            });
+
+        if (!problem) {
+            return res.status(404).json({ message: "Problem not found" });
         }
+        
+        if (req.user?.role === 'admin') {
+            const hiddenTestcases = await Testcase.find({ problemId: problem._id });
+            const problemObject = problem.toObject();
+            problemObject.hiddenTestcases = hiddenTestcases;
+            return res.status(200).json(problemObject);
+        }
+
+        res.status(200).json(problem);
+
     } catch (error) {
-        res.status(500).json({
-            message: "Failed to fetch problem",
-            error: error.message
-        });
+        res.status(500).json({ message: "Failed to fetch problem", error: error.message });
     }
 };
+
 
 // @desc    Update a problem and its test cases
 // @route   PUT /api/problems/:id
 // @access  Private (Admin)
 export const updateProblem = async (req, res) => {
+    const problemId = req.params.id;
     const { title, statement, difficulty, constraints, inputFormat, outputFormat, tags, testcases } = req.body;
+
     try {
-        const problem = await Problem.findById(req.params.id);
-        if(problem){
-            problem.title = title || problem.title;
-            problem.statement = statement || problem.statement;
-            problem.difficulty = difficulty || problem.difficulty;
-            problem.constraints = constraints || problem.constraints;
-            problem.inputFormat = inputFormat || problem.inputFormat;
-            problem.outputFormat = outputFormat || problem.outputFormat;
-            problem.tags = tags || problem.tags;
-
-            const updatedProblem = await problem.save();
-
-            if (testcases && testcases.length > 0) {
-                await Testcase.deleteMany({problemId: problem._id});
-                const testcasesToCreate = testcases.map(tc => ({
-                    ...tc,
-                    problemId: problem._id
-                }));
-                await Testcase.insertMany(testcasesToCreate);
-            }
-            res.status(200).json(updatedProblem);
+        const problem = await Problem.findById(problemId);
+        if (!problem) {
+            return res.status(404).json({ message: "Problem not found" });
         }
-        else {
-            res.status(404).json({
-                message: "Problem not found"
-            });
+        
+        const oldHiddenTestcases = await Testcase.find({ problemId });
+        if (oldHiddenTestcases.length > 0) {
+            const keysToDelete = oldHiddenTestcases.reduce((keys, tc) => {
+                keys.push(tc.inputS3Key, tc.outputS3Key);
+                return keys;
+            }, []);
+            await deleteFromS3(keysToDelete);
+            await Testcase.deleteMany({ problemId });
         }
-    }
-    catch (error) {
-        res.status(400).json({
-            message: "Failed to update problem",
-            error: error.message
-        });
+        
+        const { sampleCases, hiddenCases } = splitTestcases(testcases);
+        
+        problem.title = title || problem.title;
+        problem.statement = statement || problem.statement;
+        problem.difficulty = difficulty || problem.difficulty;
+        problem.constraints = constraints || problem.constraints;
+        problem.inputFormat = inputFormat || problem.inputFormat;
+        problem.outputFormat = outputFormat || problem.outputFormat;
+        problem.tags = tags || problem.tags;
+        problem.sampleTestcases = sampleCases;
+        
+        const updatedProblem = await problem.save();
+        
+        if (hiddenCases.length > 0) {
+            const hiddenTestcasesToCreate = await Promise.all(hiddenCases.map(async (tc) => {
+                const testcaseId = new mongoose.Types.ObjectId();
+                const inputKey = `testcases/${problem._id}/${testcaseId}/input.txt`;
+                const outputKey = `testcases/${problem._id}/${testcaseId}/output.txt`;
+
+                await Promise.all([ uploadToS3(inputKey, tc.input), uploadToS3(outputKey, tc.expectedOutput) ]);
+
+                return { _id: testcaseId, problemId: problem._id, inputS3Key: inputKey, outputS3Key: outputKey, isSample: false };
+            }));
+            await Testcase.insertMany(hiddenTestcasesToCreate);
+        }
+
+        res.status(200).json(updatedProblem);
+    } catch (error) {
+        res.status(400).json({ message: "Failed to update problem", error: error.message });
     }
 };
 
-// @desc    Delete a problem and its test cases
+
+// @desc    Delete a problem and its associated test cases (from DB and S3)
 // @route   DELETE /api/problems/:id
 // @access  Private (Admin)
 export const deleteProblem = async (req, res) => {
     try {
-        const problem = await Problem.findById(req.params.id);
-        if(problem){
-            await Testcase.deleteMany({problemId: problem._id});
-            await problem.deleteOne();
-            res.status(200).json({
-                message: "Problem deleted successfully"
-            });
-        } else {
-            res.status(404).json({
-                message: "Problem not found"
-            });
+        const problemId = req.params.id;
+        const problem = await Problem.findById(problemId);
+
+        if (!problem) {
+            return res.status(404).json({ message: "Problem not found" });
         }
+
+        const hiddenTestcases = await Testcase.find({ problemId: problemId });
+        if (hiddenTestcases && hiddenTestcases.length > 0) {
+            const s3KeysToDelete = hiddenTestcases.reduce((keys, tc) => {
+                keys.push(tc.inputS3Key, tc.outputS3Key);
+                return keys;
+            }, []);
+            console.log(`Preparing to delete ${s3KeysToDelete.length} hidden test case objects from S3...`);
+            await deleteFromS3(s3KeysToDelete);
+        }
+
+        await Testcase.deleteMany({ problemId: problemId });
+        await problem.deleteOne();
+
+        res.status(200).json({ message: "Problem and associated test cases deleted successfully" });
     } catch (error) {
-        res.status(500).json({
-            message: "Failed to delete problem",
-            error: error.message
-        });
+        console.error("Failed to delete problem:", error);
+        res.status(500).json({ message: "Failed to delete problem", error: error.message });
     }
 };
 
-// @desc    Run code against custom input
+// @desc    Run code against custom input (unaffected by the schema change)
 // @route   POST /api/problems/run
 // @access  Private
 export const runCode = async (req, res) => {
@@ -157,60 +195,38 @@ export const runCode = async (req, res) => {
         res.status(200).json(response.data);
     } catch (error) {
         const status = error.response?.status || 503;
-        const data = error.response?.data || {
-            error: 'Service Unavailable',
-            message: 'The evaluation service is temporarily down or did not respond in time.'
-        };
+        const data = error.response?.data || { error: 'Service Unavailable' };
         res.status(status).json(data);
     }
 };
 
-// @desc    Run code against all sample test cases for a problem
+// @desc    Run code against sample test cases (unaffected by the schema change, still useful for pre-submission checks)
 // @route   POST /api/problems/:id/run-samples
 // @access  Private
 export const runSampleTests = async (req, res) => {
-    console.log('[CONTROLLER] Entered runSampleTests');
     const { language, code } = req.body;
     const { id: problemId } = req.params;
     const EVALUATION_SERVICE_BASE_URL = process.env.EVALUATION_SERVICE_URL || 'http://localhost:5001';
 
     try {
-        console.log(`[CONTROLLER] Fetching sample testcases for problemId: ${problemId}`);
-        const sampleTestcases = await Testcase.find({ problemId, isSample: true }).select('input expectedOutput');
+        const problem = await Problem.findById(problemId).select('sampleTestcases');
         
-        console.log(`[CONTROLLER] Found ${sampleTestcases.length} sample testcases.`);
-
-        if (!sampleTestcases || sampleTestcases.length === 0) {
-            console.log('[CONTROLLER] No sample testcases found. Responding to client.');
-            return res.status(200).json({
-                message: "No sample testcases available to run."
-            });
+        if (!problem || !problem.sampleTestcases || problem.sampleTestcases.length === 0) {
+            return res.status(200).json({ message: "No sample testcases available to run." });
         }
         
         const payload = {
             language,
             code,
-            testcases: sampleTestcases.map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
+            testcases: problem.sampleTestcases.map(tc => ({ input: tc.input, expectedOutput: tc.expectedOutput }))
         };
 
-        console.log('[CONTROLLER] Sending payload to evaluation-service at:', `${EVALUATION_SERVICE_BASE_URL}/run-multiple`);
-
         const response = await axios.post(`${EVALUATION_SERVICE_BASE_URL}/run-multiple`, payload, { timeout: 30000 });
-
-        console.log('[CONTROLLER] Received response from evaluation-service. Status:', response.status);
-        console.log('[CONTROLLER] Responding to client with data:', response.data);
         res.status(200).json(response.data);
 
     } catch (error) {
-        console.error('[CONTROLLER] An error occurred in runSampleTests:', error);
-
         const status = error.response?.status || 503;
-        const data = error.response?.data || {
-            verdict: 'Service Error',
-            stderr: 'The evaluation service is temporarily down or did not respond in time.'
-        };
-
-        console.error(`[CONTROLLER] Responding with error. Status: ${status}, Data:`, data);
+        const data = error.response?.data || { verdict: 'Service Error', stderr: 'The evaluation service is down or timed out.' };
         res.status(status).json(data);
     }
 };

@@ -1,10 +1,9 @@
 import DOMPurify from 'dompurify';
-import SubmissionDetailView from './SubmissionDetailView'; // New component we'll create next
+import SubmissionDetailView from './SubmissionDetailView';
 import Loader from './Loader';
 
-// The original ProblemDescription component is now nested inside InfoPanel
 const ProblemView = ({ problem }) => {
-    const sampleTestcases = problem.testcases?.filter(tc => tc.isSample) || [];
+    const sampleTestcases = problem.sampleTestcases || [];
     const difficultyColor = {
         Easy: 'bg-green-900 text-green-300',
         Medium: 'bg-yellow-900 text-yellow-300',

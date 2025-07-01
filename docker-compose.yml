@@ -14,18 +14,15 @@ services:
     container_name: evaluation-worker
     ports:
       - "5001:5001"
+    env_file:
+      - .env
     volumes:
-      # We create a shared volume for temporary code files.
       - code-temp-volume:/usr/src/app/temp
       - /var/run/docker.sock:/var/run/docker.sock
       - ./evaluation-service:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
       - rabbitmq
-    environment:
-      - MONGODB_URI=${MONGODB_URI}
-      - RABBITMQ_URI=amqp://rabbitmq
-      - RESULT_EXCHANGE=results_exchange
     restart: unless-stopped
       
 volumes:

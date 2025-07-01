@@ -1,5 +1,6 @@
 import Submission from '../models/submissionModel.js';
 import { getChannel } from '../config/rabbitmq.js';
+import { uploadToS3, downloadFromS3 } from '../utils/s3.js';
 
 export const getUserSubmissionsForProblem = async (req, res) => {
     const { problemId } = req.query;
@@ -12,16 +13,22 @@ export const getUserSubmissionsForProblem = async (req, res) => {
 };
 
 export const getSubmissionById = async (req, res) => {
-    try {
-        const submission = await Submission.findById(req.params.id);
+     try {
+        const submission = await Submission.findById(req.params.id).lean();
+
         if (!submission) {
             return res.status(404).json({ message: 'Submission not found.' });
         }
         if (submission.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized to view this submission.' });
         }
+        const code = await downloadFromS3(submission.codeS3Key);
+        submission.code = code;
+
         res.status(200).json(submission);
+
     } catch (error) {
+        console.error("Error fetching submission detail:", error);
         res.status(500).json({ message: 'Failed to fetch submission details.' });
     }
 }
@@ -30,8 +37,22 @@ export const createSubmission = async (req, res) => {
     const { problemId, language, code } = req.body;
     console.log(`[API Server] Received submission for problemId: ${problemId}`);
     try {
-        const submission = await Submission.create({ userId: req.user._id, problemId, language, code, verdict: "Pending" });
-        
+        const tempSubmission = new Submission();
+        const submissionId = tempSubmission._id;
+
+        const codeS3Key = `submissions/${req.user._id}/${problemId}/${submissionId}.${language}`;
+
+        await uploadToS3(codeS3Key, code);
+
+        const submission = await Submission.create({
+            _id: submissionId,
+            userId: req.user._id,
+            problemId,
+            language,
+            codeS3Key, 
+            verdict: "Pending"
+        });
+
         const channel = getChannel();
         const queue = 'submission_queue';
         const msg = JSON.stringify({ submissionId: submission._id.toString() });

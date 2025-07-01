@@ -6,13 +6,13 @@ const testcaseSchema = new mongoose.Schema({
         ref: "Problem",
         required: true
     },
-    input: {
+    inputS3Key: {
         type: String,
-        required: [true, "Input is required"]
+        required: [true, "Input S3 Key is required"]
     },
-    expectedOutput: {
+    outputS3Key: {
         type: String,
-        required: [true, "Expected output is required"]
+        required: [true, "Expected Output S3 Key is required"]
     },
     isSample: {
         type: Boolean,
