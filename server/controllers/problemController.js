@@ -2,7 +2,7 @@ import axios from "axios";
 import mongoose from "mongoose";
 import Problem from "../models/problemModel.js";
 import Testcase from '../models/testcaseModel.js';
-import { uploadToS3, deleteFromS3 } from "../utils/s3.js";
+import { uploadToS3, deleteFromS3, downloadFromS3 } from "../utils/s3.js";
 
 const splitTestcases = (testcases) => {
     const sampleCases = testcases.filter(tc => tc.isSample).map(({ input, expectedOutput, explanation }) => ({ input, expectedOutput, explanation }));
@@ -81,9 +81,30 @@ export const getProblemById = async (req, res) => {
         }
         
         if (req.user?.role === 'admin') {
-            const hiddenTestcases = await Testcase.find({ problemId: problem._id });
             const problemObject = problem.toObject();
-            problemObject.hiddenTestcases = hiddenTestcases;
+
+            const sampleCases = problemObject.sampleTestcases.map(tc => ({ ...tc, isSample: true }));
+
+            const hiddenTestcases = await Testcase.find({ problemId: problem._id });
+
+            const hydratedHiddenCases = await Promise.all(
+                hiddenTestcases.map(async (tc) => {
+                    const [input, expectedOutput] = await Promise.all([
+                        downloadFromS3(tc.inputS3Key),
+                        downloadFromS3(tc.outputS3Key)
+                    ]);
+                    return {
+                        _id: tc._id,
+                        input,
+                        expectedOutput,
+                        isSample: false,
+                        explanation: tc.explanation || '',
+                    };
+                })
+            );
+
+            problemObject.testcases = [...sampleCases, ...hydratedHiddenCases];
+            
             return res.status(200).json(problemObject);
         }
 

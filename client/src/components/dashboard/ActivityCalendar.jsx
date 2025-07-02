@@ -18,13 +18,12 @@ const ActivityCalendar = ({ data, stats }) => {
 
     const getIntensityClass = (count) => {
         if (!count || count === 0) return 'bg-slate-700/50';
-        if (count <= 2) return 'bg-accent/50';
-        if (count <= 5) return 'bg-accent/70';
-        if (count <= 10) return 'bg-accent/90';
+        if (count <= 2) return 'bg-accent/30';
+        if (count <= 5) return 'bg-accent/50';
+        if (count <= 10) return 'bg-accent/70';
         return 'bg-accent';
     };
     
-    const monthNames = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
     return (
         <div className="bg-primary border border-border-color p-5 rounded-lg">
@@ -45,14 +44,17 @@ const ActivityCalendar = ({ data, stats }) => {
                 {monthsToDisplay.map((monthDate, i) => {
                     const year = monthDate.getFullYear();
                     const month = monthDate.getMonth();
-                    const monthName = monthNames[i];
+                    const monthName = monthDate.toLocaleString('default', { month: 'short' });
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     const firstDayOfWeek = monthDate.getDay(); 
 
                     const days = Array.from({ length: daysInMonth }, (_, dayIndex) => {
                         const day = dayIndex + 1;
                         const date = new Date(year, month, day);
-                        const dateString = date.toISOString().split('T')[0];
+                        const y = date.getFullYear();
+                        const m = String(date.getMonth() + 1).padStart(2, '0'); 
+                        const d = String(date.getDate()).padStart(2, '0'); 
+                        const dateString = `${y}-${m}-${d}`;
                         return {
                             date: dateString,
                             count: activityData[dateString] || 0,
