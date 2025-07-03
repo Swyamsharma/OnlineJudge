@@ -117,7 +117,14 @@ export const executeCodeAgainstTestcases = async (language, code, testcases) => 
         const result = await runInContainer(language, code, testcase.input);
         if (result.verdict !== 'Success') return result;
          if (normalizeOutput(result.output) !== normalizeOutput(testcase.expectedOutput)) {
-            return { verdict: 'Wrong Answer' };
+            return { 
+                verdict: 'Wrong Answer',
+                failedTestCase: {
+                    input: testcase.input,
+                    expectedOutput: testcase.expectedOutput,
+                    actualOutput: result.output,
+                }
+            };
         }
         if (result.executionTime > maxTime) maxTime = result.executionTime;
         if (result.memoryUsed > maxMemory) maxMemory = result.memoryUsed;

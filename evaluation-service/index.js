@@ -60,7 +60,7 @@ channel.consume(SUBMISSION_QUEUE, async (msg) => {
         
         const result = await executeCodeAgainstTestcases(submission.language, code, allTestcases);
         
-        await Submission.findByIdAndUpdate(submissionId, { verdict: result.verdict, executionTime: result.executionTime, memoryUsed: result.memoryUsed });
+        await Submission.findByIdAndUpdate(submissionId, { verdict: result.verdict, executionTime: result.executionTime, memoryUsed: result.memoryUsed, failedTestCase: result.failedTestCase });
         const resultMsg = JSON.stringify({ submissionId: submission._id, userId: submission.userId, verdict: result.verdict });
         channel.publish(process.env.RESULT_EXCHANGE, '', Buffer.from(resultMsg));
         console.log(`[EvalSvc-Worker] Finished job for ${submissionId}, verdict: ${result.verdict}`);

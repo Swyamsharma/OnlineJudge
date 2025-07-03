@@ -12,6 +12,14 @@ const submissionSchema = new mongoose.Schema({
     },
     executionTime: { type: Number },
     memoryUsed: { type: Number },
+    failedTestCase: {
+        type: {
+            input: String,
+            expectedOutput: String,
+            actualOutput: String
+        },
+        required: false
+    }
 }, { timestamps: { createdAt: 'submittedAt' } });
 
 const Submission = mongoose.model("Submission", submissionSchema);

@@ -128,18 +128,50 @@ export const updateProblem = async (req, res) => {
         if (!problem) {
             return res.status(404).json({ message: "Problem not found" });
         }
-        
-        const oldHiddenTestcases = await Testcase.find({ problemId });
-        if (oldHiddenTestcases.length > 0) {
-            const keysToDelete = oldHiddenTestcases.reduce((keys, tc) => {
-                keys.push(tc.inputS3Key, tc.outputS3Key);
-                return keys;
-            }, []);
-            await deleteFromS3(keysToDelete);
-            await Testcase.deleteMany({ problemId });
+
+        const { sampleCases, hiddenCases: newHiddenCases } = splitTestcases(testcases);
+        const oldHiddenCases = await Testcase.find({ problemId });
+
+        const oldHiddenCaseMap = new Map(oldHiddenCases.map(tc => [tc._id.toString(), tc]));
+        const newHiddenCaseIds = new Set(newHiddenCases.filter(tc => tc._id).map(tc => tc._id.toString()));
+
+        const casesToDelete = oldHiddenCases.filter(tc => !newHiddenCaseIds.has(tc._id.toString()));
+        if (casesToDelete.length > 0) {
+            const s3KeysToDelete = casesToDelete.map(tc => tc.inputS3Key).concat(casesToDelete.map(tc => tc.outputS3Key));
+            await deleteFromS3(s3KeysToDelete);
+            await Testcase.deleteMany({ _id: { $in: casesToDelete.map(tc => tc._id) } });
+            console.log(`[Update] Deleted ${casesToDelete.length} test cases.`);
         }
-        
-        const { sampleCases, hiddenCases } = splitTestcases(testcases);
+
+        const casesToAdd = newHiddenCases.filter(tc => !tc._id);
+        if (casesToAdd.length > 0) {
+            const createdTestcases = await Promise.all(casesToAdd.map(async (tc) => {
+                const testcaseId = new mongoose.Types.ObjectId();
+                const inputKey = `testcases/${problem._id}/${testcaseId}/input.txt`;
+                const outputKey = `testcases/${problem._id}/${testcaseId}/output.txt`;
+                await Promise.all([uploadToS3(inputKey, tc.input), uploadToS3(outputKey, tc.expectedOutput)]);
+                return { _id: testcaseId, problemId, inputS3Key: inputKey, outputS3Key: outputKey, isSample: false, explanation: tc.explanation };
+            }));
+            await Testcase.insertMany(createdTestcases);
+            console.log(`[Update] Added ${casesToAdd.length} new test cases.`);
+        }
+        const casesToUpdate = newHiddenCases.filter(tc => tc._id && oldHiddenCaseMap.has(tc._id.toString()));
+        for (const tc of casesToUpdate) {
+            const oldCase = oldHiddenCaseMap.get(tc._id.toString());
+            const oldInput = await downloadFromS3(oldCase.inputS3Key);
+            const oldOutput = await downloadFromS3(oldCase.outputS3Key);
+
+            const inputModified = tc.input !== oldInput;
+            const outputModified = tc.expectedOutput !== oldOutput;
+
+            if (inputModified || outputModified) {
+                console.log(`[Update] Modifying test case ${tc._id}.`);
+                await Promise.all([
+                    inputModified ? uploadToS3(oldCase.inputS3Key, tc.input) : Promise.resolve(),
+                    outputModified ? uploadToS3(oldCase.outputS3Key, tc.expectedOutput) : Promise.resolve()
+                ]);
+            }
+        }
         
         problem.title = title || problem.title;
         problem.statement = statement || problem.statement;
@@ -151,19 +183,6 @@ export const updateProblem = async (req, res) => {
         problem.sampleTestcases = sampleCases;
         
         const updatedProblem = await problem.save();
-        
-        if (hiddenCases.length > 0) {
-            const hiddenTestcasesToCreate = await Promise.all(hiddenCases.map(async (tc) => {
-                const testcaseId = new mongoose.Types.ObjectId();
-                const inputKey = `testcases/${problem._id}/${testcaseId}/input.txt`;
-                const outputKey = `testcases/${problem._id}/${testcaseId}/output.txt`;
-
-                await Promise.all([ uploadToS3(inputKey, tc.input), uploadToS3(outputKey, tc.expectedOutput) ]);
-
-                return { _id: testcaseId, problemId: problem._id, inputS3Key: inputKey, outputS3Key: outputKey, isSample: false };
-            }));
-            await Testcase.insertMany(hiddenTestcasesToCreate);
-        }
 
         res.status(200).json(updatedProblem);
     } catch (error) {

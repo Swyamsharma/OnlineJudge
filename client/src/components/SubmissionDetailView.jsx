@@ -40,7 +40,31 @@ export default function SubmissionDetailView({ submission }) {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Language" value={submission.language} />
+                <StatCard label="Execution Time" value={submission.executionTime} unit=" ms" />
+                <StatCard label="Memory Used" value={submission.memoryUsed} unit=" KB" />
             </div>
+
+            {submission.verdict === 'Wrong Answer' && submission.failedTestCase && (
+                <div className="bg-secondary p-4 rounded-lg space-y-3 border border-border-color">
+                    <h3 className="font-semibold text-md text-text-primary">Failed on Test Case</h3>
+                    
+                    <div>
+                        <h4 className="font-medium text-sm mb-1 text-text-secondary">Input</h4>
+                        <pre className="bg-slate-900/80 p-2 rounded-md text-sm font-mono whitespace-pre-wrap">{submission.failedTestCase.input}</pre>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 className="font-medium text-sm mb-1 text-red-400">Your Output</h4>
+                            <pre className="bg-slate-900/80 p-2 rounded-md text-sm font-mono text-red-400/80 whitespace-pre-wrap">{submission.failedTestCase.actualOutput || '(No output)'}</pre>
+                        </div>
+                        <div>
+                            <h4 className="font-medium text-sm mb-1 text-green-400">Expected Output</h4>
+                            <pre className="bg-slate-900/80 p-2 rounded-md text-sm font-mono text-green-400/80 whitespace-pre-wrap">{submission.failedTestCase.expectedOutput}</pre>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div>
                 <h3 className="font-semibold text-md mb-2 text-text-primary">Submitted Code</h3>
@@ -62,8 +86,6 @@ export default function SubmissionDetailView({ submission }) {
                     />
                 </div>
             </div>
-            
-            {/* Future enhancement: Display failed test case details here */}
         </div>
     );
 }
