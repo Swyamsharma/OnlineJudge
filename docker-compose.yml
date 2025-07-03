@@ -24,7 +24,16 @@ services:
     depends_on:
       - rabbitmq
     restart: unless-stopped
-      
+  ai-service:
+    build: ./ai-service
+    container_name: ai-service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./ai-service/.env
+    depends_on:
+      - evaluation-service
+    restart: unless-stopped
 volumes:
   rabbitmq-data:
   code-temp-volume:
