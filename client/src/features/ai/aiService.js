@@ -11,13 +11,19 @@ const generateTestcases = async (problemData, thunkAPI) => {
     return response.data;
 };
 
-const getDebugHint = async (submissionId, thunkAPI) => {
-    const response = await axios.post(`${API_URL}/debug-submission/${submissionId}`, {}, getTokenConfig(thunkAPI));
+const getHint = async (submissionId, thunkAPI) => {
+    const response = await axios.post(`${API_URL}/hint/${submissionId}`, {}, getTokenConfig(thunkAPI));
+    return response.data;
+};
+
+const getAnalysis = async (submissionId, thunkAPI) => {
+    const response = await axios.post(`${API_URL}/analysis/${submissionId}`, {}, getTokenConfig(thunkAPI));
     return response.data;
 };
 
 const aiService = {
     generateTestcases,
-    getDebugHint,
+    getHint,
+    getAnalysis,
 };
 export default aiService;

@@ -9,7 +9,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import Editor from '@monaco-editor/react';
 
 const AITestcaseModal = ({ isOpen, onClose, onGenerate, isGenerating }) => {
-    const [referenceSolution, setReferenceSolution] = useState('#include <iostream>\n\nint main() {\n    // Paste your correct C++ solution here\n    return 0;\n}');
+    const [referenceSolution, setReferenceSolution] = useState('#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Paste your correct C++ solution here\n    return 0;\n}');
     const [language, setLanguage] = useState('cpp');
     const [count, setCount] = useState(10);
 
@@ -127,7 +127,6 @@ function ProblemFormPage() {
         }
     }, [problem, isEditMode, problemId, isDataLoaded]);
 
-
     const handleFormChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
@@ -155,8 +154,14 @@ function ProblemFormPage() {
     };
 
     const handleGenerateTestcases = (aiData) => {
-        if (!formData.statement || !formData.constraints) {
-            toast.error("Please provide a Problem Statement and Constraints on the main form first.");
+        const sampleCases = testcases.filter(tc => tc.isSample && tc.input && tc.expectedOutput);
+        
+        if (!formData.statement || !formData.constraints || !formData.inputFormat) {
+            toast.error("Please provide a Problem Statement, Constraints, and Input Format on the main form first.");
+            return;
+        }
+        if (sampleCases.length === 0) {
+            toast.error("Please provide at least one complete Sample Case to use as a format guide for the AI.");
             return;
         }
         dispatch(generateTestcases({
@@ -165,6 +170,9 @@ function ProblemFormPage() {
             referenceSolution: aiData.referenceSolution,
             language: aiData.language,
             count: aiData.count,
+            inputFormat: formData.inputFormat,
+            outputFormat: formData.outputFormat,
+            sampleTestcases: sampleCases,
         })).then(action => {
             if (action.type.endsWith('/fulfilled')) {
                 const newCases = action.payload.map(tc => ({ ...tc, isSample: false, explanation: '' }));
@@ -214,7 +222,6 @@ function ProblemFormPage() {
             <div className="max-w-screen-2xl mx-auto w-full"> 
                 <form onSubmit={onSubmit} className="flex flex-col h-[calc(100vh-150px)]">
                     <h1 className="text-3xl font-bold mb-6 flex-none text-text-primary">{isEditMode ? 'Edit Problem' : 'Create New Problem'}</h1>
-
                     <div className="flex-grow min-h-0">
                         <PanelGroup direction="horizontal">
                             <Panel defaultSize={50} minSize={30}>
