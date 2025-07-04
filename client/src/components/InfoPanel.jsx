@@ -50,7 +50,7 @@ const ProblemView = ({ problem }) => {
                     {tc.explanation && (
                          <div className="mt-2">
                             <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                            <p className="bg-secondary/50 p-3 rounded-md text-sm">{tc.explanation}</p>
+                            <p className="bg-secondary/50 p-3 rounded-md text-sm whitespace-pre-wrap">{tc.explanation}</p>
                         </div>
                     )}
                 </div>
