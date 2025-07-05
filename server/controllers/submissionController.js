@@ -1,4 +1,6 @@
 import Submission from '../models/submissionModel.js';
+import Problem from '../models/problemModel.js';
+import User from '../models/userModel.js';
 import { getChannel } from '../config/rabbitmq.js';
 import { uploadToS3, downloadFromS3, deleteFromS3 } from '../utils/s3.js';
 
@@ -81,7 +83,32 @@ export const getMySubmissions = async (req, res) => {
 
 export const getAllSubmissions = async (req, res) => {
     try {
-        const submissions = await Submission.find({})
+        const { search, verdict } = req.query;
+        let query = {};
+
+        if (verdict) {
+            query.verdict = verdict;
+        }
+
+        if (search) {
+            const userIds = await User.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            
+            const problemIds = await Problem.find({
+                title: { $regex: search, $options: 'i' }
+            }).select('_id');
+            
+            query.$or = [
+                { userId: { $in: userIds.map(u => u._id) } },
+                { problemId: { $in: problemIds.map(p => p._id) } }
+            ];
+        }
+
+        const submissions = await Submission.find(query)
             .sort({ submittedAt: -1 })
             .populate('userId', 'name email')
             .populate('problemId', 'title')

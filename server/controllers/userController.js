@@ -232,7 +232,22 @@ export const getDashboardStats = async (req, res) => {
 // @access  Private (Admin)
 export const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find({}).sort({ createdAt: -1 }).select('_id name username email role createdAt');
+        const { search, role } = req.query;
+        let query = {};
+        
+        if (role) {
+            query.role = role;
+        }
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { username: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        const users = await User.find(query).sort({ createdAt: -1 }).select('_id name username email role createdAt');
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch users', error: error.message });

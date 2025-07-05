@@ -51,9 +51,9 @@ export const changeUserPassword = createAsyncThunk('user/changePassword', async 
     }
 });
 
-export const getAllUsers = createAsyncThunk('user/admin/getAll', async (_, thunkAPI) => {
+export const getAllUsers = createAsyncThunk('user/admin/getAll', async (filters = {}, thunkAPI) => {
     try {
-        return await userService.getAllUsers(thunkAPI);
+        return await userService.getAllUsers(filters, thunkAPI);
     } catch (error) {
         const message = (error.response?.data?.message) || error.message || 'Failed to fetch users.';
         return thunkAPI.rejectWithValue(message);

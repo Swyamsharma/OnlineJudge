@@ -5,6 +5,8 @@ import { getAllSubmissions, deleteSubmission, reset } from '../../features/submi
 import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { useDebounce } from '../../hooks/useDebounce';
+import { VscSearch } from 'react-icons/vsc';
 
 function AdminSubmissionsPage() {
     const dispatch = useDispatch();
@@ -13,8 +15,22 @@ function AdminSubmissionsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submissionToDelete, setSubmissionToDelete] = useState(null);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [verdictFilter, setVerdictFilter] = useState('');
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
     useEffect(() => {
-        dispatch(getAllSubmissions());
+        const filters = {
+            search: debouncedSearchQuery,
+            verdict: verdictFilter,
+        };
+        if (!filters.search) delete filters.search;
+        if (!filters.verdict) delete filters.verdict;
+
+        dispatch(getAllSubmissions(filters));
+    }, [debouncedSearchQuery, verdictFilter, dispatch]);
+    
+    useEffect(() => {
         return () => {
             dispatch(reset());
         };
@@ -56,6 +72,8 @@ function AdminSubmissionsPage() {
             default: return 'text-text-secondary';
         }
     };
+    
+    const verdictOptions = ["Accepted", "Wrong Answer", "Time Limit Exceeded", "Memory Limit Exceeded", "Compilation Error", "Runtime Error", "System Error", "Pending"];
 
     return (
         <>
@@ -66,6 +84,27 @@ function AdminSubmissionsPage() {
                         ← Back to Dashboard
                     </Link>
                 </div>
+
+                {/* Filter Bar */}
+                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                    <div className="relative flex-grow">
+                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <input
+                            type="text"
+                            placeholder="Search by User or Problem..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm"
+                        />
+                    </div>
+                    <div className="w-56">
+                         <select value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
+                            <option value="">All Verdicts</option>
+                            {verdictOptions.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                    </div>
+                </div>
+
                 <div className="bg-primary border border-border-color rounded-lg shadow-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-border-color">
                         <thead className="bg-slate-800">
@@ -100,7 +139,7 @@ function AdminSubmissionsPage() {
                 </div>
                  {allSubmissions.length === 0 && !isFetchingAll && (
                     <div className="text-center py-10 text-text-secondary">
-                        No submissions found.
+                        No submissions found matching your filters.
                     </div>
                 )}
             </div>

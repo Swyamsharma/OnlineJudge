@@ -25,8 +25,9 @@ const getMySubmissions = async (thunkAPI) => {
     return response.data;
 };
 
-const getAllSubmissions = async (thunkAPI) => {
-    const response = await axios.get(`${API_URL}/all`, getTokenConfig(thunkAPI));
+const getAllSubmissions = async (filters, thunkAPI) => {
+    const params = new URLSearchParams(filters).toString();
+    const response = await axios.get(`${API_URL}/all?${params}`, getTokenConfig(thunkAPI));
     return response.data;
 };
 

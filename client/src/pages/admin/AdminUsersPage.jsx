@@ -5,6 +5,8 @@ import { toast } from 'react-hot-toast';
 import { getAllUsers, updateUserByAdmin, deleteUserByAdmin, reset } from '../../features/user/userSlice';
 import Loader from '../../components/Loader';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { useDebounce } from '../../hooks/useDebounce';
+import { VscSearch } from 'react-icons/vsc';
 
 function AdminUsersPage() {
     const dispatch = useDispatch();
@@ -12,9 +14,23 @@ function AdminUsersPage() {
     const { adminUsers, isLoading, isUpdating } = useSelector((state) => state.user);
 
     const [modalState, setModalState] = useState({ isOpen: false, userId: null });
+    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState('');
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
     useEffect(() => {
-        dispatch(getAllUsers());
+        const filters = {
+            search: debouncedSearchQuery,
+            role: roleFilter,
+        };
+        if (!filters.search) delete filters.search;
+        if (!filters.role) delete filters.role;
+        
+        dispatch(getAllUsers(filters));
+    }, [debouncedSearchQuery, roleFilter, dispatch]);
+
+    useEffect(() => {
         return () => {
             dispatch(reset());
         };
@@ -59,11 +75,33 @@ function AdminUsersPage() {
         <>
             <div className="max-w-7xl mx-auto w-full">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold mb-1 text-text-primary">Manage Users</h1>
+                    <h1 className="text-3xl font-bold text-text-primary">Manage Users</h1>
                     <Link to="/admin/dashboard" className="text-sm font-medium text-accent hover:text-accent-hover">
                         ← Back to Dashboard
                     </Link>
                 </div>
+                
+                {/* Filter Bar for Admin Users */}
+                 <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                    <div className="relative flex-grow">
+                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, or username..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm"
+                        />
+                    </div>
+                    <div className="w-48">
+                         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
+                            <option value="">All Roles</option>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="bg-primary border border-border-color rounded-lg shadow-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-border-color">
                         <thead className="bg-slate-800">
@@ -112,6 +150,9 @@ function AdminUsersPage() {
                             ))}
                         </tbody>
                     </table>
+                     {adminUsers.length === 0 && (
+                        <div className="text-center py-10 text-text-secondary">No users found matching your filters.</div>
+                    )}
                 </div>
             </div>
             <ConfirmationModal

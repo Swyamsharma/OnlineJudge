@@ -28,8 +28,9 @@ const changeUserPassword = async (passwordData, thunkAPI) => {
     return response.data;
 }
 
-const getAllUsers = async (thunkAPI) => {
-    const response = await axios.get(API_URL + 'all', getTokenConfig(thunkAPI));
+const getAllUsers = async (filters, thunkAPI) => {
+    const params = new URLSearchParams(filters).toString();
+    const response = await axios.get(API_URL + `all?${params}`, getTokenConfig(thunkAPI));
     return response.data;
 };
 

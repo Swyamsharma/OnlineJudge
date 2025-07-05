@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { getProblems, reset, deleteProblem } from '../../features/problems/problemSlice';
 import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { VscSearch } from 'react-icons/vsc';
 
 function AdminProblemListPage() {
     const dispatch = useDispatch();
@@ -13,12 +14,21 @@ function AdminProblemListPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [problemToDelete, setProblemToDelete] = useState(null);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedDifficulty, setSelectedDifficulty] = useState('All');
+
     useEffect(() => {
         dispatch(getProblems());
         return () => {
             dispatch(reset());
         };
     }, [dispatch]);
+
+    const filteredProblems = useMemo(() => {
+        return problems
+            .filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .filter(p => selectedDifficulty === 'All' || p.difficulty === selectedDifficulty);
+    }, [problems, searchQuery, selectedDifficulty]);
 
     const handleDeleteClick = (id) => {
         setProblemToDelete(id);
@@ -40,7 +50,6 @@ function AdminProblemListPage() {
         setIsModalOpen(false);
         setProblemToDelete(null);
     };
-
 
     if (isLoading && !problems.length) {
         return <Loader />;
@@ -64,6 +73,28 @@ function AdminProblemListPage() {
                         + Create New Problem
                     </Link>
                 </div>
+                
+                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                    <div className="relative flex-grow">
+                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <input
+                            type="text"
+                            placeholder="Search by title..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm"
+                        />
+                    </div>
+                    <div className="w-48">
+                         <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
+                            <option>All Difficulties</option>
+                            <option>Easy</option>
+                            <option>Medium</option>
+                            <option>Hard</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="bg-primary border border-border-color rounded-lg shadow-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-border-color">
                         <thead className="bg-slate-800">
@@ -74,7 +105,7 @@ function AdminProblemListPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-color">
-                            {problems.map(problem => (
+                            {filteredProblems.map(problem => (
                                 <tr key={problem._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">{problem.title}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -88,6 +119,9 @@ function AdminProblemListPage() {
                             ))}
                         </tbody>
                     </table>
+                     {filteredProblems.length === 0 && (
+                        <div className="text-center py-10 text-text-secondary">No problems found.</div>
+                    )}
                 </div>
             </div>
             

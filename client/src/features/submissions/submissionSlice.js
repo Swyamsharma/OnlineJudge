@@ -36,8 +36,8 @@ export const getMySubmissions = createAsyncThunk("submissions/getMy", async (_, 
     catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch submission summary"); }
 });
 
-export const getAllSubmissions = createAsyncThunk("submissions/admin/getAll", async (_, thunkAPI) => {
-    try { return await submissionService.getAllSubmissions(thunkAPI); }
+export const getAllSubmissions = createAsyncThunk("submissions/admin/getAll", async (filters = {}, thunkAPI) => {
+    try { return await submissionService.getAllSubmissions(filters, thunkAPI); }
     catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch all submissions"); }
 });
 
