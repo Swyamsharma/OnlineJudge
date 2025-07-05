@@ -6,7 +6,8 @@ import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useDebounce } from '../../hooks/useDebounce';
-import { VscSearch } from 'react-icons/vsc';
+import { VscSearch, VscCheck } from 'react-icons/vsc';
+import FilterPopover from '../../components/FilterPopover';
 
 function AdminSubmissionsPage() {
     const dispatch = useDispatch();
@@ -16,7 +17,7 @@ function AdminSubmissionsPage() {
     const [submissionToDelete, setSubmissionToDelete] = useState(null);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [verdictFilter, setVerdictFilter] = useState('');
+    const [verdictFilter, setVerdictFilter] = useState(''); 
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
     useEffect(() => {
@@ -73,7 +74,7 @@ function AdminSubmissionsPage() {
         }
     };
     
-    const verdictOptions = ["Accepted", "Wrong Answer", "Time Limit Exceeded", "Memory Limit Exceeded", "Compilation Error", "Runtime Error", "System Error", "Pending"];
+    const verdictOptions = ["All Verdicts", "Accepted", "Wrong Answer", "Time Limit Exceeded", "Memory Limit Exceeded", "Compilation Error", "Runtime Error", "System Error", "Pending"];
 
     return (
         <>
@@ -86,9 +87,10 @@ function AdminSubmissionsPage() {
                 </div>
 
                 {/* Filter Bar */}
-                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-end gap-4">
                     <div className="relative flex-grow">
-                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                         <label className="block text-sm font-medium text-text-secondary mb-1">Search</label>
+                        <VscSearch className="absolute left-3 bottom-2.5 text-text-secondary" />
                         <input
                             type="text"
                             placeholder="Search by User or Problem..."
@@ -98,10 +100,16 @@ function AdminSubmissionsPage() {
                         />
                     </div>
                     <div className="w-56">
-                         <select value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
-                            <option value="">All Verdicts</option>
-                            {verdictOptions.map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
+                        <FilterPopover label="Verdict" selectedCount={verdictFilter ? 1 : 0} widthClass="w-56">
+                            <ul className="space-y-1">
+                                {verdictOptions.map(v => (
+                                    <li key={v} onClick={() => setVerdictFilter(v === 'All Verdicts' ? '' : v)} className={`flex items-center justify-between p-2 rounded-md hover:bg-slate-700/50 cursor-pointer ${verdictFilter === v || (verdictFilter === '' && v === 'All Verdicts') ? 'bg-slate-700/50' : ''}`}>
+                                        <span className={getVerdictColor(v)}>{v}</span>
+                                        {(verdictFilter === v || (verdictFilter === '' && v === 'All Verdicts')) && <VscCheck className="text-accent"/>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </FilterPopover>
                     </div>
                 </div>
 

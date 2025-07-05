@@ -113,6 +113,7 @@ function ProblemListPage() {
     const currentProblems = filteredProblems.slice(startIndex, endIndex);
 
     const difficultyColor = { Easy: 'text-green-400', Medium: 'text-yellow-400', Hard: 'text-red-400' };
+    const statusOptions = ["All", "To-Do", "Attempted", "Solved"];
     const difficultyOptions = { Easy: 'Easy', Medium: 'Med.', Hard: 'Hard' };
     
     if (isLoading && !problems.length) return <Loader />;
@@ -132,7 +133,7 @@ function ProblemListPage() {
                     </div>
                     {/* Difficulty Popover */}
                     <div className="w-full md:w-40">
-                         <FilterPopover label="Difficulty" selectedCount={selectedDifficulties.size} widthClass="w-48">
+                         <FilterPopover label="Difficulty" selectedCount={selectedDifficulties.size} widthClass="w-40">
                             <ul className="space-y-1">
                                 {Object.keys(difficultyOptions).map(d => (
                                     <li key={d} onClick={() => handleDifficultyToggle(d)} className={`flex items-center justify-between p-2 rounded-md hover:bg-slate-700/50 cursor-pointer ${selectedDifficulties.has(d) ? 'bg-slate-700/50' : ''}`}>
@@ -143,16 +144,19 @@ function ProblemListPage() {
                             </ul>
                         </FilterPopover>
                     </div>
-                    {/* Status Dropdown */}
+                    {/* Status Popover */}
                     {user && (
                          <div className="w-full md:w-40">
-                            <label htmlFor="status" className="text-sm font-medium text-text-secondary mb-1 block">Status</label>
-                            <select id="status" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
-                                <option>All</option>
-                                <option>To-Do</option>
-                                <option>Attempted</option>
-                                <option>Solved</option>
-                            </select>
+                            <FilterPopover label="Status" selectedCount={selectedStatus === 'All' ? 0 : 1} widthClass="w-40">
+                                <ul className="space-y-1">
+                                    {statusOptions.map(s => (
+                                        <li key={s} onClick={() => setSelectedStatus(s)} className={`flex items-center justify-between p-1 rounded-md hover:bg-slate-700/50 cursor-pointer ${selectedStatus === s ? 'bg-slate-700/50' : ''}`}>
+                                            <span className="text-text-primary">{s}</span>
+                                            {selectedStatus === s && <VscCheck className="text-accent"/>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </FilterPopover>
                         </div>
                     )}
                     {/* Tags Popover */}

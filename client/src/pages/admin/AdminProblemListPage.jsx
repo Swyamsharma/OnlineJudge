@@ -5,7 +5,8 @@ import { getProblems, reset, deleteProblem } from '../../features/problems/probl
 import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../../components/ConfirmationModal';
-import { VscSearch } from 'react-icons/vsc';
+import { VscSearch, VscCheck } from 'react-icons/vsc';
+import FilterPopover from '../../components/FilterPopover';
 
 function AdminProblemListPage() {
     const dispatch = useDispatch();
@@ -15,7 +16,7 @@ function AdminProblemListPage() {
     const [problemToDelete, setProblemToDelete] = useState(null);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedDifficulty, setSelectedDifficulty] = useState('All');
+    const [selectedDifficulties, setSelectedDifficulties] = useState(new Set());
 
     useEffect(() => {
         dispatch(getProblems());
@@ -27,8 +28,15 @@ function AdminProblemListPage() {
     const filteredProblems = useMemo(() => {
         return problems
             .filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
-            .filter(p => selectedDifficulty === 'All' || p.difficulty === selectedDifficulty);
-    }, [problems, searchQuery, selectedDifficulty]);
+            .filter(p => selectedDifficulties.size === 0 || selectedDifficulties.has(p.difficulty));
+    }, [problems, searchQuery, selectedDifficulties]);
+    
+    const handleDifficultyToggle = (difficulty) => {
+        const newSet = new Set(selectedDifficulties);
+        if (newSet.has(difficulty)) newSet.delete(difficulty);
+        else newSet.add(difficulty);
+        setSelectedDifficulties(newSet);
+    };
 
     const handleDeleteClick = (id) => {
         setProblemToDelete(id);
@@ -55,14 +63,7 @@ function AdminProblemListPage() {
         return <Loader />;
     }
 
-    const difficultyColor = (difficulty) => {
-        switch (difficulty) {
-            case 'Easy': return 'text-green-400';
-            case 'Medium': return 'text-yellow-400';
-            case 'Hard': return 'text-red-400';
-            default: return 'text-text-secondary';
-        }
-    };
+    const difficultyColor = { Easy: 'text-green-400', Medium: 'text-yellow-400', Hard: 'text-red-400' };
 
     return (
         <>
@@ -74,9 +75,11 @@ function AdminProblemListPage() {
                     </Link>
                 </div>
                 
-                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                {/* Filter Bar for Admin Problems */}
+                <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-end gap-4">
                     <div className="relative flex-grow">
-                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Search</label>
+                        <VscSearch className="absolute left-3 bottom-2.5 text-text-secondary" />
                         <input
                             type="text"
                             placeholder="Search by title..."
@@ -86,12 +89,16 @@ function AdminProblemListPage() {
                         />
                     </div>
                     <div className="w-48">
-                         <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
-                            <option>All Difficulties</option>
-                            <option>Easy</option>
-                            <option>Medium</option>
-                            <option>Hard</option>
-                        </select>
+                         <FilterPopover label="Difficulty" selectedCount={selectedDifficulties.size} widthClass="w-48">
+                            <ul className="space-y-1">
+                                {['Easy', 'Medium', 'Hard'].map(d => (
+                                    <li key={d} onClick={() => handleDifficultyToggle(d)} className={`flex items-center justify-between p-2 rounded-md hover:bg-slate-700/50 cursor-pointer ${selectedDifficulties.has(d) ? 'bg-slate-700/50' : ''}`}>
+                                        <span className={difficultyColor[d]}>{d}</span>
+                                        {selectedDifficulties.has(d) && <VscCheck className="text-accent"/>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </FilterPopover>
                     </div>
                 </div>
 
@@ -109,7 +116,7 @@ function AdminProblemListPage() {
                                 <tr key={problem._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">{problem.title}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span className={difficultyColor(problem.difficulty)}>{problem.difficulty}</span>
+                                        <span className={difficultyColor[problem.difficulty]}>{problem.difficulty}</span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
                                         <Link to={`/admin/problems/edit/${problem._id}`} className="text-accent hover:text-accent-hover">Edit</Link>
@@ -125,7 +132,6 @@ function AdminProblemListPage() {
                 </div>
             </div>
             
-            {/* Render the modal */}
             <ConfirmationModal
                 isOpen={isModalOpen}
                 onClose={closeModal}

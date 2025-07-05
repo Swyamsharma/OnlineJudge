@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import { getAllUsers, updateUserByAdmin, deleteUserByAdmin, reset } from '../../features/user/userSlice';
 import Loader from '../../components/Loader';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useDebounce } from '../../hooks/useDebounce';
-import { VscSearch } from 'react-icons/vsc';
+import { VscSearch, VscCheck } from 'react-icons/vsc';
+import FilterPopover from '../../components/FilterPopover';
 
 function AdminUsersPage() {
     const dispatch = useDispatch();
@@ -70,6 +71,8 @@ function AdminUsersPage() {
     if (isLoading && !adminUsers.length) {
         return <Loader />;
     }
+    
+    const roleOptions = ["All Roles", "user", "admin"];
 
     return (
         <>
@@ -82,9 +85,10 @@ function AdminUsersPage() {
                 </div>
                 
                 {/* Filter Bar for Admin Users */}
-                 <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-center gap-4">
+                 <div className="bg-primary border border-border-color rounded-lg p-4 mb-6 flex items-end gap-4">
                     <div className="relative flex-grow">
-                        <VscSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Search</label>
+                        <VscSearch className="absolute left-3 bottom-2.5 text-text-secondary" />
                         <input
                             type="text"
                             placeholder="Search by name, email, or username..."
@@ -94,11 +98,16 @@ function AdminUsersPage() {
                         />
                     </div>
                     <div className="w-48">
-                         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full p-2 rounded-md border-border-color bg-secondary text-text-primary focus:border-accent focus:ring-accent sm:text-sm">
-                            <option value="">All Roles</option>
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        <FilterPopover label="Role" selectedCount={roleFilter ? 1 : 0} widthClass="w-48">
+                            <ul className="space-y-1">
+                                {roleOptions.map(r => (
+                                    <li key={r} onClick={() => setRoleFilter(r === 'All Roles' ? '' : r)} className={`flex items-center justify-between p-2 rounded-md hover:bg-slate-700/50 cursor-pointer ${roleFilter === r || (roleFilter === '' && r === 'All Roles') ? 'bg-slate-700/50' : ''}`}>
+                                        <span className="text-text-primary capitalize">{r}</span>
+                                        {(roleFilter === r || (roleFilter === '' && r === 'All Roles')) && <VscCheck className="text-accent"/>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </FilterPopover>
                     </div>
                 </div>
 
