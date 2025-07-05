@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 import SubmissionDetailView from './SubmissionDetailView';
 import Loader from './Loader';
 
@@ -10,6 +11,16 @@ const ProblemView = ({ problem }) => {
         Hard: 'bg-red-900 text-red-300',
     };
 
+    marked.setOptions({
+        breaks: true,
+    });
+    
+    const getSanitizedHtml = (markdownText) => {
+        if (!markdownText) return '';
+        const rawHtml = marked.parse(markdownText);
+        return DOMPurify.sanitize(rawHtml);
+    };
+
     return (
         <div className="p-4 overflow-y-auto h-full text-text-secondary">
             <div className="flex justify-between items-center mb-4">
@@ -19,20 +30,21 @@ const ProblemView = ({ problem }) => {
                 </span>
             </div>
 
-            <div className="prose prose-sm prose-invert max-w-none mb-6" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.statement) }}></div>
+            <div className="prose prose-sm prose-invert max-w-none mb-6" dangerouslySetInnerHTML={{ __html: getSanitizedHtml(problem.statement) }}></div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <h3 className="font-semibold text-md mb-2 text-text-primary">Input Format</h3>
-                    <p className="text-sm">{problem.inputFormat}</p>
+                    <div className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: getSanitizedHtml(problem.inputFormat) }}></div>
                 </div>
                 <div>
                     <h3 className="font-semibold text-md mb-2 text-text-primary">Output Format</h3>
-                    <div className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.outputFormat) }}></div>
+                    <div className="prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: getSanitizedHtml(problem.outputFormat) }}></div>
                 </div>
             </div>
             <div className="mb-6">
                 <h3 className="font-semibold text-md mb-2 text-text-primary">Constraints</h3>
-                <pre className="bg-secondary p-3 rounded-md text-sm whitespace-pre-wrap prose prose-sm prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(problem.constraints) }}></pre>
+                <div className="prose prose-sm prose-invert max-w-none bg-secondary p-3 rounded-md" dangerouslySetInnerHTML={{ __html: getSanitizedHtml(problem.constraints) }}></div>
             </div>
             {sampleTestcases.map((tc, index) => (
                  <div key={tc._id || index} className="mb-4">
@@ -50,7 +62,7 @@ const ProblemView = ({ problem }) => {
                     {tc.explanation && (
                          <div className="mt-2">
                             <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                            <p className="bg-secondary/50 p-3 rounded-md text-sm whitespace-pre-wrap">{tc.explanation}</p>
+                            <div className="prose prose-sm prose-invert max-w-none bg-secondary/50 p-3 rounded-md" dangerouslySetInnerHTML={{ __html: getSanitizedHtml(tc.explanation) }}></div>
                         </div>
                     )}
                 </div>

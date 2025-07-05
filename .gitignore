@@ -26,4 +26,5 @@ dist-ssr
 *.config.js
 */.env
 *.env
-ThingsToAddBeforeDeployment.txt
+server/problems.json
+server/seeding.js
