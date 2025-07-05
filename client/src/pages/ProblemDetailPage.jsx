@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom'; // <-- Import useSearchParams
 import { getProblem, reset as resetProblem } from '../features/problems/problemSlice';
 import { createSubmission, getSubmissions, updateSubmission, getSubmissionDetail, reset as resetSubmission, resetSelected } from '../features/submissions/submissionSlice';
 import problemService from '../features/problems/problemService';
@@ -19,6 +19,7 @@ const HorizontalHandleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" view
 export default function ProblemDetailPage() {
     const dispatch = useDispatch();
     const { id: problemId } = useParams();
+    const [searchParams] = useSearchParams();
     
     const { problem, isLoading: isProblemLoading } = useSelector((state) => state.problem);
     const { submissions, isSubmitting, isFetching: isFetchingSubmissions, selectedSubmission, isFetchingDetail } = useSelector((state) => state.submission);
@@ -27,7 +28,10 @@ export default function ProblemDetailPage() {
     const [customInput, setCustomInput] = useState('');
     const [executionResult, setExecutionResult] = useState({ isLoading: false, data: null, type: null });
     const [leftPanelTab, setLeftPanelTab] = useState('description');
-    const [rightPanelTab, setRightPanelTab] = useState('input');
+    
+    const [rightPanelTab, setRightPanelTab] = useState(
+        searchParams.get('tab') === 'submissions' ? 'submissions' : 'input'
+    );
 
     useEffect(() => {
         dispatch(getProblem(problemId));

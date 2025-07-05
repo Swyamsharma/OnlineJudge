@@ -2,6 +2,7 @@ import Submission from '../models/submissionModel.js';
 import Problem from '../models/problemModel.js';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
+import mongoose from 'mongoose';
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -44,7 +45,7 @@ export const updateUserProfile = async (req, res) => {
                 token: generateToken(updatedUser._id),
             });
         } catch (error) {
-            if (error.code === 11000) { // Mongoose duplicate key error
+            if (error.code === 11000) {
                 const field = Object.keys(error.keyValue)[0];
                 return res.status(400).json({ message: `An account with that ${field} already exists.` });
             }
@@ -100,11 +101,33 @@ export const changeUserPassword = async (req, res) => {
 export const getDashboardStats = async (req, res) => {
     try {
         const userId = req.user._id;
-        const allUserSubmissions = await Submission.find({ userId })
-            .populate('problemId', 'difficulty title');
 
-        const totalProblemsByDifficulty = await Problem.aggregate([
-            { $group: { _id: '$difficulty', count: { $sum: 1 } } }
+        const [allUserSubmissions, totalProblemsByDifficulty, recentlySolved] = await Promise.all([
+            Submission.find({ userId }).populate('problemId', 'difficulty title'),
+            Problem.aggregate([{ $group: { _id: '$difficulty', count: { $sum: 1 } } }]),
+            Submission.aggregate([
+                { $match: { userId: new mongoose.Types.ObjectId(userId), verdict: 'Accepted' } },
+                { $sort: { submittedAt: -1 } },
+                { $group: {
+                    _id: '$problemId',
+                    solvedAt: { $first: '$submittedAt' }
+                }},
+                { $sort: { solvedAt: -1 } },
+                { $limit: 5 },
+                { $lookup: {
+                    from: 'problems',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'problemDetails'
+                }},
+                { $unwind: '$problemDetails' },
+                { $project: {
+                    _id: 1,
+                    problemId: '$_id',
+                    problemTitle: '$problemDetails.title',
+                    solvedAt: '$solvedAt'
+                }}
+            ])
         ]);
 
         const totalProblems = { Easy: 0, Medium: 0, Hard: 0 };
@@ -118,7 +141,6 @@ export const getDashboardStats = async (req, res) => {
         oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
         const submissionsLastYear = allUserSubmissions.filter(sub => sub.submittedAt >= oneYearAgo);
-        submissionsLastYear.sort((a, b) => b.submittedAt - a.submittedAt);
         
         const activityByDate = {};
         submissionsLastYear.forEach(sub => {
@@ -151,7 +173,7 @@ export const getDashboardStats = async (req, res) => {
         const totalSubmissions = allUserSubmissions.length;
         const acceptedSubmissions = allUserSubmissions.filter(s => s.verdict === 'Accepted');
 
-        const solvedProblemIds = new Set();
+        const solvedProblemIds = new Set(acceptedSubmissions.map(sub => sub.problemId?._id.toString()));
         const difficultyCount = { Easy: 0, Medium: 0, Hard: 0 };
 
         acceptedSubmissions.forEach(sub => {
@@ -165,6 +187,14 @@ export const getDashboardStats = async (req, res) => {
                 }
             }
         });
+        
+        const solvedProblems = await Problem.find({ _id: { $in: Array.from(solvedProblemIds) } });
+        solvedProblems.forEach(prob => {
+            if (difficultyCount.hasOwnProperty(prob.difficulty)) {
+                difficultyCount[prob.difficulty]++;
+            }
+        });
+
 
         const problemsSolved = solvedProblemIds.size;
         const acceptanceRate = totalSubmissions > 0 ? ((acceptedSubmissions.length / totalSubmissions) * 100).toFixed(1) : 0;
@@ -172,15 +202,6 @@ export const getDashboardStats = async (req, res) => {
         const activityData = Object.keys(activityByDate).map(date => ({
             date,
             count: activityByDate[date],
-        }));
-
-        const recentSubmissions = submissionsLastYear.slice(0, 5).map(s => ({
-            _id: s._id,
-            problemTitle: s.problemId.title,
-            problemId: s.problemId._id,
-            verdict: s.verdict,
-            submittedAt: s.submittedAt,
-            language: s.language,
         }));
         
         res.status(200).json({
@@ -197,7 +218,7 @@ export const getDashboardStats = async (req, res) => {
                 totalProblems,
             },
             activity: activityData,
-            recentSubmissions,
+            recentlySolved: recentlySolved,
         });
 
     } catch (error) {
@@ -247,7 +268,6 @@ export const updateUserByAdmin = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: 'Failed to update user', error: error.message });
-        console.error("Update User Error:", error);
     }
 };
 

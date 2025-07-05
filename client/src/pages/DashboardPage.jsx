@@ -5,7 +5,7 @@ import { getDashboardStats, reset } from '../features/user/userSlice';
 import Loader from '../components/Loader';
 import StatCard from '../components/dashboard/StatCard';
 import ActivityCalendar from '../components/dashboard/ActivityCalendar';
-import RecentSubmissions from '../components/dashboard/RecentSubmissions';
+import RecentlySolved from '../components/dashboard/RecentlySolved';
 import DifficultyChart from '../components/dashboard/DifficultyChart';
 import { toast } from 'react-hot-toast';
 import { VscSettings } from 'react-icons/vsc';
@@ -41,7 +41,7 @@ function DashboardPage() {
         );
     }
     
-    const { stats, activity, recentSubmissions } = dashboardData || { stats: {}, activity: [], recentSubmissions: [] };
+    const { stats, activity, recentlySolved } = dashboardData || { stats: {}, activity: [], recentlySolved: [] };
 
     if (!stats.totalProblems) {
         return <Loader />;
@@ -66,7 +66,6 @@ function DashboardPage() {
                 <StatCard title="Max Streak" value={`${stats.maxStreak} ${stats.maxStreak === 1 ? 'day' : 'days'}`} icon="flame" />
             </div>
 
-            {/* --- Grid layout restored to original proportions --- */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
                 <div className="lg:col-span-2">
                     <DifficultyChart 
@@ -84,7 +83,7 @@ function DashboardPage() {
             </div>
 
             <div>
-                <RecentSubmissions submissions={recentSubmissions} />
+                <RecentlySolved problems={recentlySolved} />
             </div>
         </div>
     );
