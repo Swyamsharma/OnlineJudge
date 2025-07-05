@@ -23,6 +23,7 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProblemListPage from "./pages/admin/AdminProblemListPage";
 import ProblemFormPage from "./pages/admin/ProblemFormPage";
 import AdminSubmissionsPage from "./pages/admin/AdminSubmissionsPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
                 <Route path='/admin/problems/new' element={<ProblemFormPage />} />
                 <Route path='/admin/problems/edit/:id' element={<ProblemFormPage />} />
                 <Route path='/admin/submissions' element={<AdminSubmissionsPage />} />
+                <Route path='/admin/users' element={<AdminUsersPage />} />
               </Route>
             </Routes>
           </main>

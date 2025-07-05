@@ -17,11 +17,11 @@ function AdminDashboardPage() {
                     <h2 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">View Submissions</h2>
                     <p className="text-text-secondary mt-2">Review and manage all recent user submissions.</p>
                 </Link>
-                 <div className="bg-primary/50 p-6 rounded-lg border border-dashed border-border-color cursor-not-allowed">
-                    <VscPerson className="h-8 w-8 text-slate-500 mb-4" />
-                    <h2 className="text-xl font-semibold text-slate-400">Manage Users</h2>
-                    <p className="text-slate-500 mt-2">View user roles and activity. (Coming Soon)</p>
-                </div>
+                 <Link to="/admin/users" className="bg-primary p-6 rounded-lg border border-border-color hover:border-accent transition-all hover:-translate-y-1 group">
+                    <VscPerson className="h-8 w-8 text-accent mb-4" />
+                    <h2 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">Manage Users</h2>
+                    <p className="text-text-secondary mt-2">View user roles and activity.</p>
+                </Link>
             </div>
         </div>
     );

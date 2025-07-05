@@ -5,6 +5,7 @@ import { loginSuccess } from "../auth/authSlice";
 const initialState = {
     dashboardData: null,
     profileData: null,
+    adminUsers: [],
     isLoading: true,
     isUpdating: false,
     isChangingPassword: false,
@@ -33,7 +34,6 @@ export const getUserProfile = createAsyncThunk('user/getProfile', async (_, thun
 export const updateUserProfile = createAsyncThunk('user/updateProfile', async (userData, thunkAPI) => {
     try {
         const updatedUser = await userService.updateUserProfile(userData, thunkAPI);
-        // After successful update, update the auth state as well
         thunkAPI.dispatch(loginSuccess(updatedUser));
         return updatedUser;
     } catch (error) {
@@ -47,6 +47,34 @@ export const changeUserPassword = createAsyncThunk('user/changePassword', async 
         return await userService.changeUserPassword(passwordData, thunkAPI);
     } catch (error) {
         const message = (error.response?.data?.message) || error.message || 'Failed to change password.';
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const getAllUsers = createAsyncThunk('user/admin/getAll', async (_, thunkAPI) => {
+    try {
+        return await userService.getAllUsers(thunkAPI);
+    } catch (error) {
+        const message = (error.response?.data?.message) || error.message || 'Failed to fetch users.';
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const updateUserByAdmin = createAsyncThunk('user/admin/update', async (data, thunkAPI) => {
+    try {
+        return await userService.updateUserByAdmin(data, thunkAPI);
+    } catch (error) {
+        const message = (error.response?.data?.message) || error.message || 'Failed to update user.';
+        return thunkAPI.rejectWithValue(message);
+    }
+});
+
+export const deleteUserByAdmin = createAsyncThunk('user/admin/delete', async (userId, thunkAPI) => {
+    try {
+        await userService.deleteUserByAdmin(userId, thunkAPI);
+        return userId;
+    } catch (error) {
+        const message = (error.response?.data?.message) || error.message || 'Failed to delete user.';
         return thunkAPI.rejectWithValue(message);
     }
 });
@@ -100,7 +128,7 @@ export const userSlice = createSlice({
             })
             .addCase(updateUserProfile.fulfilled, (state, action) => {
                 state.isUpdating = false;
-                state.profileData = action.payload; // Also update profile data in this slice
+                state.profileData = action.payload;
             })
             .addCase(updateUserProfile.rejected, (state, action) => {
                 state.isUpdating = false;
@@ -115,6 +143,45 @@ export const userSlice = createSlice({
             })
             .addCase(changeUserPassword.rejected, (state, action) => {
                 state.isChangingPassword = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(getAllUsers.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(getAllUsers.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.adminUsers = action.payload;
+            })
+            .addCase(getAllUsers.rejected, (state, action) => {
+                state.isLoading = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(updateUserByAdmin.pending, (state) => {
+                state.isUpdating = true;
+            })
+            .addCase(updateUserByAdmin.fulfilled, (state, action) => {
+                state.isUpdating = false;
+                const index = state.adminUsers.findIndex(u => u._id === action.payload._id);
+                if (index !== -1) {
+                    state.adminUsers[index] = action.payload;
+                }
+            })
+            .addCase(updateUserByAdmin.rejected, (state, action) => {
+                state.isUpdating = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(deleteUserByAdmin.pending, (state) => {
+                state.isUpdating = true;
+            })
+            .addCase(deleteUserByAdmin.fulfilled, (state, action) => {
+                state.isUpdating = false;
+                state.adminUsers = state.adminUsers.filter(u => u._id !== action.payload);
+            })
+            .addCase(deleteUserByAdmin.rejected, (state, action) => {
+                state.isUpdating = false;
                 state.isError = true;
                 state.message = action.payload;
             });

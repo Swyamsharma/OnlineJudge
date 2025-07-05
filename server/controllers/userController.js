@@ -205,3 +205,70 @@ export const getDashboardStats = async (req, res) => {
         res.status(500).json({ message: "Server error while fetching dashboard data" });
     }
 };
+
+// @desc    Get all users (admin)
+// @route   GET /api/users/all
+// @access  Private (Admin)
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).sort({ createdAt: -1 }).select('_id name username email role createdAt');
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch users', error: error.message });
+    }
+};
+
+// @desc    Update a user by ID (admin)
+// @route   PUT /api/users/admin/:id
+// @access  Private (Admin)
+export const updateUserByAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (req.user._id.toString() === user._id.toString() && req.body.role && req.body.role !== 'admin') {
+            return res.status(400).json({ message: 'You cannot revoke your own admin role.' });
+        }
+
+        user.role = req.body.role || user.role;
+
+        const updatedUser = await user.save();
+        res.status(200).json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            createdAt: updatedUser.createdAt
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update user', error: error.message });
+        console.error("Update User Error:", error);
+    }
+};
+
+// @desc    Delete a user by ID (admin)
+// @route   DELETE /api/users/admin/:id
+// @access  Private (Admin)
+export const deleteUserByAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        if (req.user._id.toString() === user._id.toString()) {
+            return res.status(400).json({ message: 'You cannot delete your own account.' });
+        }
+
+        await user.deleteOne();
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete user', error: error.message });
+    }
+};
