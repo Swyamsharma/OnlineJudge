@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { getAllUsers, updateUserByAdmin, deleteUserByAdmin, reset } from '../../features/user/userSlice';
 import Loader from '../../components/Loader';
@@ -57,7 +58,12 @@ function AdminUsersPage() {
     return (
         <>
             <div className="max-w-7xl mx-auto w-full">
-                <h1 className="text-3xl font-bold mb-6 text-text-primary">Manage Users</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold mb-1 text-text-primary">Manage Users</h1>
+                    <Link to="/admin/dashboard" className="text-sm font-medium text-accent hover:text-accent-hover">
+                        ← Back to Dashboard
+                    </Link>
+                </div>
                 <div className="bg-primary border border-border-color rounded-lg shadow-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-border-color">
                         <thead className="bg-slate-800">

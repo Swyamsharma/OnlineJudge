@@ -69,6 +69,16 @@ export const createSubmission = async (req, res) => {
     }
 };
 
+export const getMySubmissions = async (req, res) => {
+    try {
+        const submissions = await Submission.find({ userId: req.user._id })
+            .select('problemId verdict');
+        res.status(200).json(submissions);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch user submission summary." });
+    }
+};
+
 export const getAllSubmissions = async (req, res) => {
     try {
         const submissions = await Submission.find({})

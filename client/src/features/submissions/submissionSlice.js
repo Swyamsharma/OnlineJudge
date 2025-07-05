@@ -3,10 +3,12 @@ import submissionService from "./submissionService";
 
 const initialState = { 
     submissions: [], 
+    mySubmissions: [],
     allSubmissions: [],
     selectedSubmission: null,
     isSubmitting: false, 
     isFetching: false,
+    isFetchingMine: false,
     isFetchingAll: false,
     isFetchingDetail: false, 
     isDeleting: false,
@@ -27,6 +29,11 @@ export const getSubmissions = createAsyncThunk("submissions/getAll", async (prob
 export const getSubmissionDetail = createAsyncThunk("submissions/getDetail", async (submissionId, thunkAPI) => {
     try { return await submissionService.getSubmissionDetail(submissionId, thunkAPI); }
     catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch submission details"); }
+});
+
+export const getMySubmissions = createAsyncThunk("submissions/getMy", async (_, thunkAPI) => {
+    try { return await submissionService.getMySubmissions(thunkAPI); }
+    catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch submission summary"); }
 });
 
 export const getAllSubmissions = createAsyncThunk("submissions/admin/getAll", async (_, thunkAPI) => {
@@ -94,6 +101,16 @@ export const submissionSlice = createSlice({
             })
             .addCase(getSubmissionDetail.rejected, (state, action) => {
                 state.isFetchingDetail = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(getMySubmissions.pending, (state) => { state.isFetchingMine = true; })
+            .addCase(getMySubmissions.fulfilled, (state, action) => {
+                state.isFetchingMine = false;
+                state.mySubmissions = action.payload;
+            })
+            .addCase(getMySubmissions.rejected, (state, action) => {
+                state.isFetchingMine = false;
                 state.isError = true;
                 state.message = action.payload;
             })
