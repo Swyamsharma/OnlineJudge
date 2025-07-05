@@ -20,5 +20,15 @@ const getSubmissionDetail = async(submissionId, thunkAPI) => {
     return response.data;
 }
 
-const submissionService = { createSubmission, getSubmissions, getSubmissionDetail };
+const getAllSubmissions = async (thunkAPI) => {
+    const response = await axios.get(`${API_URL}/all`, getTokenConfig(thunkAPI));
+    return response.data;
+};
+
+const deleteSubmission = async (submissionId, thunkAPI) => {
+    const response = await axios.delete(`${API_URL}/${submissionId}`, getTokenConfig(thunkAPI));
+    return response.data;
+};
+
+const submissionService = { createSubmission, getSubmissions, getSubmissionDetail, getAllSubmissions, deleteSubmission };
 export default submissionService;

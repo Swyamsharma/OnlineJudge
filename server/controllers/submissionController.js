@@ -1,6 +1,6 @@
 import Submission from '../models/submissionModel.js';
 import { getChannel } from '../config/rabbitmq.js';
-import { uploadToS3, downloadFromS3 } from '../utils/s3.js';
+import { uploadToS3, downloadFromS3, deleteFromS3 } from '../utils/s3.js';
 
 export const getUserSubmissionsForProblem = async (req, res) => {
     const { problemId } = req.query;
@@ -66,5 +66,40 @@ export const createSubmission = async (req, res) => {
     } catch (error) {
         console.error("[API Server] FAILED to queue submission:", error);
         res.status(500).json({ message: "Failed to queue submission" });
+    }
+};
+
+export const getAllSubmissions = async (req, res) => {
+    try {
+        const submissions = await Submission.find({})
+            .sort({ submittedAt: -1 })
+            .populate('userId', 'name email')
+            .populate('problemId', 'title')
+            .limit(100);
+        res.status(200).json(submissions);
+    } catch (error) {
+        console.error("Failed to fetch all submissions:", error);
+        res.status(500).json({ message: "Failed to fetch all submissions", error: error.message });
+    }
+};
+
+export const deleteSubmission = async (req, res) => {
+    try {
+        const submission = await Submission.findById(req.params.id);
+
+        if (!submission) {
+            return res.status(404).json({ message: "Submission not found" });
+        }
+
+        if (submission.codeS3Key) {
+            await deleteFromS3([submission.codeS3Key]);
+        }
+
+        await submission.deleteOne();
+
+        res.status(200).json({ message: "Submission deleted successfully" });
+    } catch (error) {
+        console.error("Failed to delete submission:", error);
+        res.status(500).json({ message: "Failed to delete submission", error: error.message });
     }
 };

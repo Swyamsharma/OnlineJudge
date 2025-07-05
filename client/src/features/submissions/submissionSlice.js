@@ -3,10 +3,13 @@ import submissionService from "./submissionService";
 
 const initialState = { 
     submissions: [], 
+    allSubmissions: [],
     selectedSubmission: null,
     isSubmitting: false, 
     isFetching: false,
+    isFetchingAll: false,
     isFetchingDetail: false, 
+    isDeleting: false,
     isError: false, 
     message: "" 
 };
@@ -26,16 +29,32 @@ export const getSubmissionDetail = createAsyncThunk("submissions/getDetail", asy
     catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch submission details"); }
 });
 
+export const getAllSubmissions = createAsyncThunk("submissions/admin/getAll", async (_, thunkAPI) => {
+    try { return await submissionService.getAllSubmissions(thunkAPI); }
+    catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch all submissions"); }
+});
+
+export const deleteSubmission = createAsyncThunk("submissions/admin/delete", async (submissionId, thunkAPI) => {
+    try { 
+        await submissionService.deleteSubmission(submissionId, thunkAPI);
+        return submissionId;
+    }
+    catch (error) { return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to delete submission"); }
+});
+
 export const submissionSlice = createSlice({
     name: "submission",
     initialState,
     reducers: {
         reset: (state) => {
             state.submissions = [];
+            state.allSubmissions = [];
             state.selectedSubmission = null;
             state.isSubmitting = false;
             state.isFetching = false;
+            state.isFetchingAll = false;
             state.isFetchingDetail = false;
+            state.isDeleting = false;
             state.isError = false;
             state.message = "";
         },
@@ -47,6 +66,10 @@ export const submissionSlice = createSlice({
             const index = state.submissions.findIndex(s => s._id === updatedSub._id);
             if (index !== -1) {
                 state.submissions[index] = { ...state.submissions[index], ...updatedSub };
+            }
+            const adminIndex = state.allSubmissions.findIndex(s => s._id === updatedSub._id);
+            if (adminIndex !== -1) {
+                state.allSubmissions[adminIndex] = { ...state.allSubmissions[adminIndex], ...updatedSub };
             }
             if (state.selectedSubmission && state.selectedSubmission._id === updatedSub._id) {
                 state.selectedSubmission = { ...state.selectedSubmission, ...updatedSub };
@@ -71,6 +94,26 @@ export const submissionSlice = createSlice({
             })
             .addCase(getSubmissionDetail.rejected, (state, action) => {
                 state.isFetchingDetail = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(getAllSubmissions.pending, (state) => { state.isFetchingAll = true; })
+            .addCase(getAllSubmissions.fulfilled, (state, action) => {
+                state.isFetchingAll = false;
+                state.allSubmissions = action.payload;
+            })
+            .addCase(getAllSubmissions.rejected, (state, action) => {
+                state.isFetchingAll = false;
+                state.isError = true;
+                state.message = action.payload;
+            })
+            .addCase(deleteSubmission.pending, (state) => { state.isDeleting = true; })
+            .addCase(deleteSubmission.fulfilled, (state, action) => {
+                state.isDeleting = false;
+                state.allSubmissions = state.allSubmissions.filter(sub => sub._id !== action.payload);
+            })
+            .addCase(deleteSubmission.rejected, (state, action) => {
+                state.isDeleting = false;
                 state.isError = true;
                 state.message = action.payload;
             });

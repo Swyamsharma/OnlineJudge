@@ -12,15 +12,15 @@ function AdminDashboardPage() {
                     <h2 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">Manage Problems</h2>
                     <p className="text-text-secondary mt-2">Create, view, edit, and delete coding problems.</p>
                 </Link>
+                 <Link to="/admin/submissions" className="bg-primary p-6 rounded-lg border border-border-color hover:border-accent transition-all hover:-translate-y-1 group">
+                    <VscChecklist className="h-8 w-8 text-accent mb-4" />
+                    <h2 className="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors">View Submissions</h2>
+                    <p className="text-text-secondary mt-2">Review and manage all recent user submissions.</p>
+                </Link>
                  <div className="bg-primary/50 p-6 rounded-lg border border-dashed border-border-color cursor-not-allowed">
                     <VscPerson className="h-8 w-8 text-slate-500 mb-4" />
                     <h2 className="text-xl font-semibold text-slate-400">Manage Users</h2>
                     <p className="text-slate-500 mt-2">View user roles and activity. (Coming Soon)</p>
-                </div>
-                 <div className="bg-primary/50 p-6 rounded-lg border border-dashed border-border-color cursor-not-allowed">
-                    <VscChecklist className="h-8 w-8 text-slate-500 mb-4" />
-                    <h2 className="text-xl font-semibold text-slate-400">View Submissions</h2>
-                    <p className="text-slate-500 mt-2">Review all user submissions. (Coming Soon)</p>
                 </div>
             </div>
         </div>
