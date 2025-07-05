@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { register, reset } from "../features/auth/authSlice";
 import { toast } from "react-hot-toast";
 import Loader from "../components/Loader";
+import PasswordInput from "../components/PasswordInput";
 
 function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -102,35 +103,24 @@ function RegisterPage() {
                             />
                         </div>
                     </div>
-
-                    <div>
-                        <label htmlFor="password"className="block text-sm font-medium text-text-secondary">Password</label>
-                        <div className="mt-1">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                value={password}
-                                onChange={onChange}
-                                required
-                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="password2" className="block text-sm font-medium text-text-secondary">Confirm Password</label>
-                        <div className="mt-1">
-                            <input
-                                id="password2"
-                                name="password2"
-                                type="password"
-                                value={password2}
-                                onChange={onChange}
-                                required
-                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
-                            />
-                        </div>
-                    </div>
+                    <PasswordInput
+                        id="password"
+                        name="password"
+                        label="Password"
+                        value={password}
+                        onChange={onChange}
+                        required
+                        className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                    />
+                    <PasswordInput
+                        id="password2"
+                        name="password2"
+                        label="Confirm Password"
+                        value={password2}
+                        onChange={onChange}
+                        required
+                        className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                    />
 
                     <div>
                         <button

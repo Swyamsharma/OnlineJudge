@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, reset } from '../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 import Loader from '../components/Loader';
+import PasswordInput from '../components/PasswordInput';
 
 function ResetPasswordPage() {
     const [password, setPassword] = useState('');
@@ -53,30 +54,24 @@ function ResetPasswordPage() {
                     Set a New Password
                 </h2>
                 <form className="space-y-6" onSubmit={onSubmit}>
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary">New Password</label>
-                        <div className="mt-1">
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary">Confirm New Password</label>
-                        <div className="mt-1">
-                            <input
-                                type="password"
-                                value={password2}
-                                onChange={(e) => setPassword2(e.target.value)}
-                                required
-                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
-                            />
-                        </div>
-                    </div>
+                    <PasswordInput
+                        id="password"
+                        name="password"
+                        label="New Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                    />
+                    <PasswordInput
+                        id="password2"
+                        name="password2"
+                        label="Confirm New Password"
+                        value={password2}
+                        onChange={(e) => setPassword2(e.target.value)}
+                        required
+                        className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                    />
                     <div>
                         <button type="submit" className="flex w-full justify-center rounded-md border border-transparent bg-accent py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary">
                             Reset Password

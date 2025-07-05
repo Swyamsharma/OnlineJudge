@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-hot-toast';
 import { updateUserProfile, changeUserPassword, reset } from '../features/user/userSlice';
 import Loader from '../components/Loader';
+import PasswordInput from '../components/PasswordInput';
 
 function ProfilePage() {
     const dispatch = useDispatch();
@@ -108,19 +109,34 @@ function ProfilePage() {
             <div className="bg-primary border border-border-color rounded-lg shadow-lg p-8">
                 <form onSubmit={handlePasswordSubmit} className="space-y-6">
                     <h2 className="text-xl font-semibold text-text-primary">Change Password</h2>
-                     <div>
-                        <label htmlFor="currentPassword" className={labelClasses}>Current Password</label>
-                        <input type="password" id="currentPassword" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} required className={inputClasses} />
-                    </div>
+                    <PasswordInput
+                        id="currentPassword"
+                        name="currentPassword"
+                        label="Current Password"
+                        value={passwordData.currentPassword}
+                        onChange={handlePasswordChange}
+                        required
+                        className={inputClasses}
+                    />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="newPassword" className={labelClasses}>New Password</label>
-                            <input type="password" id="newPassword" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} required className={inputClasses} />
-                        </div>
-                        <div>
-                            <label htmlFor="confirmNewPassword" className={labelClasses}>Confirm New Password</label>
-                            <input type="password" id="confirmNewPassword" name="confirmNewPassword" value={passwordData.confirmNewPassword} onChange={handlePasswordChange} required className={inputClasses} />
-                        </div>
+                        <PasswordInput
+                            id="newPassword"
+                            name="newPassword"
+                            label="New Password"
+                            value={passwordData.newPassword}
+                            onChange={handlePasswordChange}
+                            required
+                            className={inputClasses}
+                        />
+                        <PasswordInput
+                            id="confirmNewPassword"
+                            name="confirmNewPassword"
+                            label="Confirm New Password"
+                            value={passwordData.confirmNewPassword}
+                            onChange={handlePasswordChange}
+                            required
+                            className={inputClasses}
+                        />
                     </div>
                     <div className="flex justify-end">
                         <button type="submit" disabled={isChangingPassword}
