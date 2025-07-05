@@ -5,7 +5,7 @@ function Footer() {
         <footer className="bg-primary border-t border-border-color">
             <div className="max-w-7xl mx-auto py-12 px-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div className="col-span-2 md:col-span-1">
+                    <div className="col-span-2 md:col-span-2">
                         <h2 className="text-xl font-bold text-text-primary">OnlineJudge</h2>
                         <p className="text-sm text-text-secondary mt-2">Sharpen Your Skills. Ace Your Interviews.</p>
                     </div>
@@ -15,14 +15,6 @@ function Footer() {
                         <ul className="mt-4 space-y-2">
                             <li><Link to="/problems" className="text-text-primary hover:text-accent">Problems</Link></li>
                             <li><Link to="/dashboard" className="text-text-primary hover:text-accent">Dashboard</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">Legal</h3>
-                        <ul className="mt-4 space-y-2">
-                             <li><a href="#" className="text-text-primary hover:text-accent">Terms of Service</a></li>
-                            <li><a href="#" className="text-text-primary hover:text-accent">Privacy Policy</a></li>
                         </ul>
                     </div>
 

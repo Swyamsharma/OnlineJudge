@@ -8,6 +8,8 @@ import { toast } from "react-hot-toast";
 import { VscSearch, VscCheck, VscClose, VscSync } from "react-icons/vsc";
 import FilterPopover from "../components/FilterPopover";
 
+const PROBLEMS_PER_PAGE = 15;
+
 function ProblemListPage() {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
@@ -19,7 +21,9 @@ function ProblemListPage() {
     const [selectedDifficulties, setSelectedDifficulties] = useState(new Set());
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [selectedTags, setSelectedTags] = useState(new Set());
-    const [tagSearchQuery, setTagSearchQuery] = useState(""); // State for search within tags popover
+    const [tagSearchQuery, setTagSearchQuery] = useState("");
+
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (isError) {
@@ -33,6 +37,10 @@ function ProblemListPage() {
             dispatch(resetProblems());
         };
     }, [dispatch, isError, message, user]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedDifficulties, selectedStatus, selectedTags]);
 
     // Memoize processing of submission data
     const { solvedProblemIds, attemptedProblemIds } = useMemo(() => {
@@ -62,7 +70,6 @@ function ProblemListPage() {
         return availableTags.filter(tag => tag.toLowerCase().includes(tagSearchQuery.toLowerCase()));
     }, [availableTags, tagSearchQuery]);
     
-    // Toggle handlers for multi-select
     const handleDifficultyToggle = (difficulty) => {
         const newSet = new Set(selectedDifficulties);
         if (newSet.has(difficulty)) newSet.delete(difficulty);
@@ -99,6 +106,11 @@ function ProblemListPage() {
         setSelectedTags(new Set());
         setTagSearchQuery("");
     };
+    
+    const totalPages = Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    const endIndex = startIndex + PROBLEMS_PER_PAGE;
+    const currentProblems = filteredProblems.slice(startIndex, endIndex);
 
     const difficultyColor = { Easy: 'text-green-400', Medium: 'text-yellow-400', Hard: 'text-red-400' };
     const difficultyOptions = { Easy: 'Easy', Medium: 'Med.', Hard: 'Hard' };
@@ -182,10 +194,12 @@ function ProblemListPage() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border-color">
-                        {filteredProblems.length > 0 ? (
-                            filteredProblems.map((problem) => {
+                        {currentProblems.length > 0 ? (
+                            currentProblems.map((problem) => {
                                 const isSolved = solvedProblemIds.has(problem._id);
                                 const isAttempted = attemptedProblemIds.has(problem._id);
+                                const displayedTags = problem.tags.slice(0, 3);
+                                const remainingTags = problem.tags.length - 3;
                                 return (
                                 <tr key={problem._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -206,10 +220,15 @@ function ProblemListPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex flex-wrap gap-2">
-                                            {problem.tags.map(tag => (
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {displayedTags.map(tag => (
                                                 <span key={tag} className="text-xs bg-secondary text-text-secondary px-2 py-1 rounded-full">{tag}</span>
                                             ))}
+                                            {remainingTags > 0 && (
+                                                <span className="text-xs text-text-secondary px-2 py-1 rounded-full border border-dashed border-border-color">
+                                                    +{remainingTags}
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -222,6 +241,29 @@ function ProblemListPage() {
                     </tbody>
                 </table>
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                 <div className="mt-6 flex justify-between items-center text-sm">
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-text-secondary">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
