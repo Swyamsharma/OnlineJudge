@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
@@ -25,43 +25,52 @@ import ProblemFormPage from "./pages/admin/ProblemFormPage";
 import AdminSubmissionsPage from "./pages/admin/AdminSubmissionsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 
+function AppContent() {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+  const mainClass = `flex-1 flex flex-col min-h-0 overflow-y-auto ${isHomePage ? '' : 'px-6 py-8'}`;
+
+  return (
+    <main className={mainClass}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:resettoken" element={<ResetPasswordPage />} />
+        <Route path="/login/success" element={<LoginSuccess />} />
+        <Route path="/problems" element={<ProblemListPage />} />
+        <Route path="/problems/:id" element={<ProblemDetailPage />} />
+
+        <Route path='/dashboard' element={<PrivateRoute />}>
+          <Route path='/dashboard' element={<DashboardPage />} />
+        </Route>
+        <Route path='/profile' element={<PrivateRoute />}>
+          <Route path='/profile' element={<ProfilePage />} />
+        </Route>
+        
+        <Route path='/admin' element={<AdminRoute />}>
+          <Route path='/admin/dashboard' element={<AdminDashboardPage />} />
+          <Route path='/admin/problems' element={<AdminProblemListPage />} />
+          <Route path='/admin/problems/new' element={<ProblemFormPage />} />
+          <Route path='/admin/problems/edit/:id' element={<ProblemFormPage />} />
+          <Route path='/admin/submissions' element={<AdminSubmissionsPage />} />
+          <Route path='/admin/users' element={<AdminUsersPage />} />
+        </Route>
+      </Routes>
+    </main>
+  );
+}
+
+
 function App() {
   return (
     <>
       <Router>
         <div className="flex flex-col h-screen bg-secondary">
           <Header />
-          <main className="flex-1 flex flex-col px-6 py-8 min-h-0">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password/:resettoken" element={<ResetPasswordPage />} />
-              <Route path="/login/success" element={<LoginSuccess />} />
-              <Route path="/problems" element={<ProblemListPage />} />
-              <Route path="/problems/:id" element={<ProblemDetailPage />} />
-
-              {/* Private Routes */}
-              <Route path='/dashboard' element={<PrivateRoute />}>
-                <Route path='/dashboard' element={<DashboardPage />} />
-              </Route>
-              <Route path='/profile' element={<PrivateRoute />}>
-                <Route path='/profile' element={<ProfilePage />} />
-              </Route>
-
-              {/* Private Admin Routes */}
-              <Route path='/admin' element={<AdminRoute />}>
-                <Route path='/admin/dashboard' element={<AdminDashboardPage />} />
-                <Route path='/admin/problems' element={<AdminProblemListPage />} />
-                <Route path='/admin/problems/new' element={<ProblemFormPage />} />
-                <Route path='/admin/problems/edit/:id' element={<ProblemFormPage />} />
-                <Route path='/admin/submissions' element={<AdminSubmissionsPage />} />
-                <Route path='/admin/users' element={<AdminUsersPage />} />
-              </Route>
-            </Routes>
-          </main>
+          <AppContent />
         </div>
       </Router>
       <Toaster position="top-center" reverseOrder={false} toastOptions={{ 
