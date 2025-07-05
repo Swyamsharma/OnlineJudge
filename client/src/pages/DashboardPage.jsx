@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { Link } from 'react-router-dom';
 import { getDashboardStats, reset } from '../features/user/userSlice';
 import Loader from '../components/Loader';
 import StatCard from '../components/dashboard/StatCard';
@@ -7,6 +8,7 @@ import ActivityCalendar from '../components/dashboard/ActivityCalendar';
 import RecentSubmissions from '../components/dashboard/RecentSubmissions';
 import DifficultyChart from '../components/dashboard/DifficultyChart';
 import { toast } from 'react-hot-toast';
+import { VscSettings } from 'react-icons/vsc';
 
 function DashboardPage() {
     const dispatch = useDispatch();
@@ -47,9 +49,14 @@ function DashboardPage() {
 
     return (
         <div className="max-w-7xl mx-auto w-full space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-text-primary">Welcome back, {user?.name}!</h1>
-                <p className="mt-1 text-text-secondary">Here's a snapshot of your progress. Keep up the great work.</p>
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold text-text-primary">Welcome back, {user?.name}!</h1>
+                    <p className="mt-1 text-text-secondary">Here's a snapshot of your progress. Keep up the great work.</p>
+                </div>
+                 <Link to="/profile" className="p-2 rounded-lg text-text-secondary hover:bg-slate-700/50 hover:text-accent transition-colors" title="Profile Settings">
+                    <VscSettings className="h-6 w-6" />
+                </Link>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

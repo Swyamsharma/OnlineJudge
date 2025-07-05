@@ -8,11 +8,12 @@ import Loader from "../components/Loader";
 function RegisterPage() {
     const [formData, setFormData] = useState({
         name: "",
+        username: "",
         email: "",
         password: "",
         password2: "",
     });
-    const { name, email, password, password2 } = formData;
+    const { name, username, email, password, password2 } = formData;
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -43,7 +44,7 @@ function RegisterPage() {
         if (password !== password2) {
             toast.error("Passwords do not match");
         } else {
-            const userData = { name, email, password };
+            const userData = { name, username, email, password };
             dispatch(register(userData));
         }
     };
@@ -60,13 +61,27 @@ function RegisterPage() {
                 </h2>
                 <form className="space-y-6" onSubmit={onSubmit}>
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Name</label>
+                        <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Full Name</label>
                         <div className="mt-1">
                             <input
                                 id="name"
                                 name="name"
                                 type="text"
                                 value={name}
+                                onChange={onChange}
+                                required
+                                className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label htmlFor="username" className="block text-sm font-medium text-text-secondary">Username</label>
+                        <div className="mt-1">
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                value={username}
                                 onChange={onChange}
                                 required
                                 className="block w-full rounded-md border-border-color bg-secondary py-2 px-3 text-text-primary shadow-sm focus:border-accent focus:ring-accent sm:text-sm"

@@ -16,6 +16,7 @@ import ProblemDetailPage from "./pages/ProblemDetailPage";
 
 // Private Pages
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 
 // Admin Pages
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -45,6 +46,10 @@ function App() {
               <Route path='/dashboard' element={<PrivateRoute />}>
                 <Route path='/dashboard' element={<DashboardPage />} />
               </Route>
+              <Route path='/profile' element={<PrivateRoute />}>
+                <Route path='/profile' element={<ProfilePage />} />
+              </Route>
+
               {/* Private Admin Routes */}
               <Route path='/admin' element={<AdminRoute />}>
                 <Route path='/admin/dashboard' element={<AdminDashboardPage />} />

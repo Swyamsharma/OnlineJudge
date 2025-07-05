@@ -1,5 +1,98 @@
 import Submission from '../models/submissionModel.js';
 import Problem from '../models/problemModel.js';
+import User from '../models/userModel.js';
+import generateToken from '../utils/generateToken.js';
+
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+export const getUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        res.json({
+            _id: user._id,
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
+// @desc    Update user profile (non-password fields)
+// @route   PUT /api/users/profile
+// @access  Private
+export const updateUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.username = req.body.username || user.username;
+
+        try {
+            const updatedUser = await user.save();
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                token: generateToken(updatedUser._id),
+            });
+        } catch (error) {
+            if (error.code === 11000) { // Mongoose duplicate key error
+                const field = Object.keys(error.keyValue)[0];
+                return res.status(400).json({ message: `An account with that ${field} already exists.` });
+            }
+            if (error.name === 'ValidationError') {
+                 const messages = Object.values(error.errors).map(val => val.message);
+                 return res.status(400).json({ message: messages.join('. ') });
+            }
+            res.status(400).json({ message: "Failed to update profile", error: error.message });
+        }
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+
+
+// @desc    Change user password
+// @route   PUT /api/users/profile/change-password
+// @access  Private
+export const changeUserPassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Please provide both current and new passwords." });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+        return res.status(401).json({ message: "Incorrect current password." });
+    }
+
+    user.password = newPassword;
+    try {
+        await user.save();
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join('. ') });
+       }
+       res.status(500).json({ message: 'Server error while changing password', error: error.message });
+    }
+};
+
 
 // @desc    Get user dashboard statistics
 // @route   GET /api/users/dashboard
