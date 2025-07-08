@@ -5,7 +5,7 @@ import { getProblems, reset as resetProblems } from "../features/problems/proble
 import { getMySubmissions } from "../features/submissions/submissionSlice";
 import Loader from "../components/Loader";
 import { toast } from "react-hot-toast";
-import { VscSearch, VscCheck, VscClose, VscSync } from "react-icons/vsc";
+import { VscSearch, VscCheck, VscClose, VscSync, VscEdit } from "react-icons/vsc";
 import FilterPopover from "../components/FilterPopover";
 
 const PROBLEMS_PER_PAGE = 15;
@@ -42,11 +42,12 @@ function ProblemListPage() {
         setCurrentPage(1);
     }, [searchQuery, selectedDifficulties, selectedStatus, selectedTags]);
 
-    // Memoize processing of submission data
-    const { solvedProblemIds, attemptedProblemIds } = useMemo(() => {
-        if (!user || mySubmissions.length === 0) {
-            return { solvedProblemIds: new Set(), attemptedProblemIds: new Set() };
+    // Memoize processing of submission and draft data
+    const { solvedProblemIds, attemptedProblemIds, inProgressProblemIds } = useMemo(() => {
+        if (!user) {
+            return { solvedProblemIds: new Set(), attemptedProblemIds: new Set(), inProgressProblemIds: new Set() };
         }
+
         const solved = new Set();
         const attempted = new Set();
         mySubmissions.forEach(sub => {
@@ -55,8 +56,20 @@ function ProblemListPage() {
                 solved.add(sub.problemId);
             }
         });
-        return { solvedProblemIds: solved, attemptedProblemIds: attempted };
-    }, [mySubmissions, user]);
+
+        const inProgress = new Set();
+        if (problems) {
+            problems.forEach(p => {
+                const cppKey = `code-cache-${p._id}-cpp`;
+                const jsKey = `code-cache-${p._id}-javascript`;
+                if (localStorage.getItem(cppKey) || localStorage.getItem(jsKey)) {
+                    inProgress.add(p._id);
+                }
+            });
+        }
+
+        return { solvedProblemIds: solved, attemptedProblemIds: attempted, inProgressProblemIds: inProgress };
+    }, [mySubmissions, user, problems]);
     
     // Memoize and filter available tags for the popover
     const availableTags = useMemo(() => {
@@ -91,13 +104,19 @@ function ProblemListPage() {
             .filter(p => selectedDifficulties.size === 0 || selectedDifficulties.has(p.difficulty))
             .filter(p => {
                 if (!user || selectedStatus === "All") return true;
-                if (selectedStatus === "Solved") return solvedProblemIds.has(p._id);
-                if (selectedStatus === "Attempted") return attemptedProblemIds.has(p._id) && !solvedProblemIds.has(p._id);
-                if (selectedStatus === "To-Do") return !attemptedProblemIds.has(p._id);
+
+                const isSolved = solvedProblemIds.has(p._id);
+                const isAttempted = attemptedProblemIds.has(p._id);
+                const isInProgress = inProgressProblemIds.has(p._id);
+
+                if (selectedStatus === "Solved") return isSolved;
+                if (selectedStatus === "Attempted") return isAttempted && !isSolved;
+                if (selectedStatus === "In Progress") return isInProgress && !isAttempted;
+                if (selectedStatus === "To-Do") return !isSolved && !isAttempted && !isInProgress;
                 return true;
             })
             .filter(p => selectedTags.size === 0 || Array.from(selectedTags).every(tag => p.tags.includes(tag)));
-    }, [problems, searchQuery, selectedDifficulties, selectedStatus, selectedTags, solvedProblemIds, attemptedProblemIds, user]);
+    }, [problems, searchQuery, selectedDifficulties, selectedStatus, selectedTags, solvedProblemIds, attemptedProblemIds, inProgressProblemIds, user]);
 
     const clearFilters = () => {
         setSearchQuery("");
@@ -113,7 +132,7 @@ function ProblemListPage() {
     const currentProblems = filteredProblems.slice(startIndex, endIndex);
 
     const difficultyColor = { Easy: 'text-green-400', Medium: 'text-yellow-400', Hard: 'text-red-400' };
-    const statusOptions = ["All", "To-Do", "Attempted", "Solved"];
+    const statusOptions = ["All", "To-Do", "In Progress", "Attempted", "Solved"];
     const difficultyOptions = { Easy: 'Easy', Medium: 'Med.', Hard: 'Hard' };
     
     if (isLoading && !problems.length) return <Loader />;
@@ -202,14 +221,20 @@ function ProblemListPage() {
                             currentProblems.map((problem) => {
                                 const isSolved = solvedProblemIds.has(problem._id);
                                 const isAttempted = attemptedProblemIds.has(problem._id);
-                                const displayedTags = problem.tags.slice(0, 3);
-                                const remainingTags = problem.tags.length - 3;
+                                const isInProgress = inProgressProblemIds.has(problem._id);
+
                                 return (
                                 <tr key={problem._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {user && (
                                             <div className="flex justify-center">
-                                                {isSolved ? <VscCheck className="h-5 w-5 text-green-400" title="Solved" /> : isAttempted ? <VscClose className="h-5 w-5 text-red-400" title="Attempted" /> : null}
+                                                {isSolved ? (
+                                                    <VscCheck className="h-5 w-5 text-green-400" title="Solved" />
+                                                ) : isAttempted ? (
+                                                    <VscClose className="h-5 w-5 text-red-400" title="Attempted" />
+                                                ) : isInProgress ? (
+                                                    <VscEdit className="h-5 w-5 text-blue-400" title="In Progress" />
+                                                ) : null}
                                             </div>
                                         )}
                                     </td>
@@ -225,12 +250,12 @@ function ProblemListPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            {displayedTags.map(tag => (
+                                            {problem.tags.slice(0, 3).map(tag => (
                                                 <span key={tag} className="text-xs bg-secondary text-text-secondary px-2 py-1 rounded-full">{tag}</span>
                                             ))}
-                                            {remainingTags > 0 && (
+                                            {problem.tags.length - 3 > 0 && (
                                                 <span className="text-xs text-text-secondary px-2 py-1 rounded-full border border-dashed border-border-color">
-                                                    +{remainingTags}
+                                                    +{problem.tags.length - 3}
                                                 </span>
                                             )}
                                         </div>

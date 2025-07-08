@@ -1,44 +1,27 @@
-import { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import Loader from './Loader';
-
-const defaultCode = {
-    cpp: `#include <bits/stdc++.h>
-using namespace std;
-int main() {
-    // Your code here
-    cout << "Hello, World!" << endl;
-    return 0;
-}`,
-    javascript: `// Your code here
-console.log('Hello, World!');`,
-};
 
 const languageMap = {
     cpp: 'cpp',
     javascript: 'javascript',
 };
 
-export default function CodeEditor({ onCodeRun, isRunning, onCodeSubmit, isSubmitting }) {
-    const [language, setLanguage] = useState('cpp');
-    const [code, setCode] = useState(defaultCode.cpp);
-
-    const handleLanguageChange = (e) => {
-        const newLang = e.target.value;
-        setLanguage(newLang);
-        setCode(defaultCode[newLang] || '// Your code here');
-    };
-    
-    const handleEditorChange = (value) => {
-        setCode(value);
-    };
-
+export default function CodeEditor({ 
+    code, 
+    language, 
+    onCodeChange, 
+    onLanguageChange, 
+    onCodeRun, 
+    isRunning, 
+    onCodeSubmit, 
+    isSubmitting 
+}) {
     const handleRun = () => {
-        onCodeRun({ language, code });
+        onCodeRun();
     };
 
     const handleSubmit = () => {
-        onCodeSubmit({ language, code });
+        onCodeSubmit();
     };
 
     const anyActionInProgress = isRunning || isSubmitting;
@@ -48,7 +31,7 @@ export default function CodeEditor({ onCodeRun, isRunning, onCodeSubmit, isSubmi
             <div className="flex-none p-2 border-b border-border-color flex justify-between items-center">
                  <select 
                     value={language} 
-                    onChange={handleLanguageChange} 
+                    onChange={(e) => onLanguageChange(e.target.value)} 
                     disabled={anyActionInProgress} 
                     className="p-1 border rounded text-sm bg-secondary text-text-primary border-border-color focus:ring-accent focus:border-accent disabled:opacity-50"
                  >
@@ -77,7 +60,7 @@ export default function CodeEditor({ onCodeRun, isRunning, onCodeSubmit, isSubmi
                     height="100%"
                     language={languageMap[language]}
                     value={code}
-                    onChange={handleEditorChange}
+                    onChange={onCodeChange}
                     theme="vs-dark"
                     loading={<Loader />}
                     options={{

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom'; // <-- Import useSearchParams
+import { useParams, useSearchParams } from 'react-router-dom';
 import { getProblem, reset as resetProblem } from '../features/problems/problemSlice';
 import { createSubmission, getSubmissions, updateSubmission, getSubmissionDetail, reset as resetSubmission, resetSelected } from '../features/submissions/submissionSlice';
 import problemService from '../features/problems/problemService';
@@ -12,9 +12,22 @@ import InfoPanel from '../components/InfoPanel';
 import CodeEditor from '../components/CodeEditor';
 import ExecutionPanel from '../components/ExecutionPanel';
 import { toast } from 'react-hot-toast';
+import { useDebounce } from '../hooks/useDebounce';
 
 const VerticalHandleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400"><path d="M10.5 6a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 10.5 6Zm3.75.75a.75.75 0 0 0-1.5 0v10.5a.75.75 0 0 0 1.5 0V6.75Z" /></svg>);
 const HorizontalHandleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-400"><path d="M18 10.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1 0-1.5h10.5a.75.75 0 0 1 .75.75Zm-.75 3.75a.75.75 0 0 0 0-1.5H6.75a.75.75 0 0 0 0 1.5h10.5Z" /></svg>);
+
+const defaultCode = {
+    cpp: `#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    // Your code here
+    cout << "Hello, World!" << endl;
+    return 0;
+}`,
+    javascript: `// Your code here
+console.log('Hello, World!');`,
+};
 
 export default function ProblemDetailPage() {
     const dispatch = useDispatch();
@@ -32,6 +45,28 @@ export default function ProblemDetailPage() {
     const [rightPanelTab, setRightPanelTab] = useState(
         searchParams.get('tab') === 'submissions' ? 'submissions' : 'input'
     );
+
+    const [language, setLanguage] = useState('cpp');
+    const [editorCode, setEditorCode] = useState('');
+    const debouncedCode = useDebounce(editorCode, 500);
+
+    const getLocalStorageKey = useCallback((lang) => `code-cache-${problemId}-${lang}`, [problemId]);
+
+    useEffect(() => {
+        if (problemId) {
+            const key = getLocalStorageKey(language);
+            const savedCode = localStorage.getItem(key);
+            setEditorCode(savedCode || defaultCode[language]);
+        }
+    }, [language, problemId, getLocalStorageKey]);
+
+    useEffect(() => {
+        if (debouncedCode && debouncedCode !== defaultCode[language]) {
+            const key = getLocalStorageKey(language);
+            localStorage.setItem(key, debouncedCode);
+        }
+    }, [debouncedCode, language, getLocalStorageKey]);
+
 
     useEffect(() => {
         dispatch(getProblem(problemId));
@@ -54,16 +89,18 @@ export default function ProblemDetailPage() {
     
     const showLoginToast = useCallback(() => toast.error("Please log in to perform this action."), []);
 
-    const handleRunCode = useCallback(async ({ language, code }) => {
+    const handleRunCode = useCallback(async () => {
         if (!user) { showLoginToast(); return; }
         setRightPanelTab('result');
         setLeftPanelTab('description');
         dispatch(resetSelected());
 
+        const runData = { language, code: editorCode, problemId };
+
         if (customInput.trim() !== '') {
             setExecutionResult({ isLoading: true, data: null, type: 'custom' });
             try {
-                const result = await problemService.runCode({ language, code, input: customInput }, { getState: store.getState });
+                const result = await problemService.runCode({ ...runData, input: customInput }, { getState: store.getState });
                 setExecutionResult({ isLoading: false, data: result, type: 'custom' });
             } catch (error) {
                 const errorData = error.response?.data || { verdict: 'Client Error', stderr: error.message };
@@ -72,20 +109,20 @@ export default function ProblemDetailPage() {
         } else {
             setExecutionResult({ isLoading: true, data: null, type: 'samples' });
             try {
-                const resultData = await problemService.runSampleTests({ problemId, language, code }, { getState: store.getState });
+                const resultData = await problemService.runSampleTests(runData, { getState: store.getState });
                 setExecutionResult({ isLoading: false, data: resultData, type: 'samples' });
             } catch (error) {
                 const errorData = error.response?.data || { verdict: 'Client Error', stderr: error.message };
                 setExecutionResult({ isLoading: false, data: errorData, type: 'custom' });
             }
         }
-    }, [customInput, user, showLoginToast, problemId, dispatch]);
+    }, [customInput, user, showLoginToast, problemId, dispatch, language, editorCode]);
 
-    const handleCodeSubmit = useCallback(async ({ language, code }) => {
+    const handleCodeSubmit = useCallback(async () => {
         if (!user) { showLoginToast(); return; }
         setRightPanelTab('submissions');
-        dispatch(createSubmission({ problemId, language, code }));
-    }, [user, dispatch, problemId, showLoginToast]);
+        dispatch(createSubmission({ problemId, language, code: editorCode }));
+    }, [user, dispatch, problemId, showLoginToast, language, editorCode]);
 
     const handleSubmissionSelect = useCallback((submissionId) => {
         dispatch(getSubmissionDetail(submissionId));
@@ -113,6 +150,10 @@ export default function ProblemDetailPage() {
                     <PanelGroup direction="vertical">
                         <Panel defaultSize={70} minSize={20}>
                             <CodeEditor 
+                                code={editorCode}
+                                language={language}
+                                onCodeChange={setEditorCode}
+                                onLanguageChange={setLanguage}
                                 onCodeRun={handleRunCode} 
                                 isRunning={executionResult.isLoading}
                                 onCodeSubmit={handleCodeSubmit}
