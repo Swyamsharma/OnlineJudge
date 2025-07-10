@@ -23,7 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-*.config.js
+# *.config.js
 */.env
 *.env
 server/problems.json
