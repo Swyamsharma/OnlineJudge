@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { React, useState, useRef, useEffect } from 'react';
 import { VscChevronDown } from "react-icons/vsc";
 
 function FilterPopover({ label, selectedCount, children, widthClass = 'w-72' }) {

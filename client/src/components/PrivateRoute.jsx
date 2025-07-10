@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { React, useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 import Loader from './Loader';
 
