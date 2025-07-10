@@ -1,4 +1,4 @@
-import { React, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getHint, getAnalysis, reset as resetAI } from '../features/ai/aiSlice';
 import Editor from '@monaco-editor/react';

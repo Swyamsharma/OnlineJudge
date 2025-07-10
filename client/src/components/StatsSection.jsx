@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from '../api/axios';
 
 const useCountUp = (end, duration = 2000) => {
