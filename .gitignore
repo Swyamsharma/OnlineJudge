@@ -28,3 +28,4 @@ dist-ssr
 *.env
 server/problems.json
 server/seeding.js
+Things to add
