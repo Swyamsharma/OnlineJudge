@@ -26,9 +26,7 @@ function ProblemListPage() {
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        if (isError) {
-            toast.error(message);
-        }
+        
         dispatch(getProblems());
         if (user) {
             dispatch(getMySubmissions());
@@ -36,7 +34,7 @@ function ProblemListPage() {
         return () => {
             dispatch(resetProblems());
         };
-    }, [dispatch, isError, message, user]);
+    }, [dispatch, message, user]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -135,7 +133,7 @@ function ProblemListPage() {
     const statusOptions = ["All", "To-Do", "In Progress", "Attempted", "Solved"];
     const difficultyOptions = { Easy: 'Easy', Medium: 'Med.', Hard: 'Hard' };
     
-    if (isLoading && !problems.length) return <Loader />;
+    // if (isLoading && !problems.length) return <Loader />;
 
     return (
         <div className="max-w-7xl mx-auto w-full">
