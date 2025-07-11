@@ -21,10 +21,7 @@ function LoginSuccess() {
                             'Authorization': `Bearer ${token}`
                         }
                     });
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch user data');
-                    }
-                    const user = await response.data;
+                    const user = response.data; 
                     dispatch(loginSuccess({ ...user, token }));
                     toast.success('Logged in successfully!');
                     navigate('/');
