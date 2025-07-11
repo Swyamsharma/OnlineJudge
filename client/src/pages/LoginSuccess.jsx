@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../features/auth/authSlice';
 import { toast } from 'react-hot-toast';
 import Loader from '../components/Loader';
+import axios from '../api/axios';
 
 function LoginSuccess() {
     const [searchParams] = useSearchParams();
@@ -15,7 +16,7 @@ function LoginSuccess() {
         if (token) {
             const fetchUser = async (token) => {
                 try {
-                    const response = await fetch('/api/auth/me', {
+                    const response = await axios.get('/api/auth/me', {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -23,12 +24,13 @@ function LoginSuccess() {
                     if (!response.ok) {
                         throw new Error('Failed to fetch user data');
                     }
-                    const user = await response.json();
+                    const user = await response.data;
                     dispatch(loginSuccess({ ...user, token }));
                     toast.success('Logged in successfully!');
                     navigate('/');
 
                 } catch (error) {
+                    console.error("Failed to fetch user after login:", error);
                     toast.error('Login failed. Please try again.');
                     navigate('/login');
                 }
