@@ -13,7 +13,7 @@ const PROBLEMS_PER_PAGE = 15;
 function ProblemListPage() {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
-    const { problems, isLoading, isError, message } = useSelector((state) => state.problem);
+    const { problems, isLoading } = useSelector((state) => state.problem);
     const { mySubmissions } = useSelector((state) => state.submission);
 
     // Filter states
@@ -34,7 +34,7 @@ function ProblemListPage() {
         return () => {
             dispatch(resetProblems());
         };
-    }, [dispatch, message, user]);
+    }, [dispatch, user]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -133,7 +133,7 @@ function ProblemListPage() {
     const statusOptions = ["All", "To-Do", "In Progress", "Attempted", "Solved"];
     const difficultyOptions = { Easy: 'Easy', Medium: 'Med.', Hard: 'Hard' };
     
-    // if (isLoading && !problems.length) return <Loader />;
+    if (isLoading && !problems.length) return <Loader />;
 
     return (
         <div className="max-w-7xl mx-auto w-full">
