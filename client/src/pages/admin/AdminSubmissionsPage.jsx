@@ -1,23 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { getAllSubmissions, deleteSubmission, reset } from '../../features/submissions/submissionSlice';
+import { getAllSubmissions, deleteSubmission, reset, getSubmissionDetail, resetSelected } from '../../features/submissions/submissionSlice';
 import Loader from '../../components/Loader';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useDebounce } from '../../hooks/useDebounce';
 import { VscSearch, VscCheck } from 'react-icons/vsc';
 import FilterPopover from '../../components/FilterPopover';
+import AdminSubmissionViewModal from '../../components/AdminSubmissionViewModal';
+
+const SUBMISSIONS_PER_PAGE = 15;
 
 function AdminSubmissionsPage() {
     const dispatch = useDispatch();
-    const { allSubmissions, isFetchingAll, isDeleting } = useSelector((state) => state.submission);
+    const { allSubmissions, isFetchingAll, isDeleting, selectedSubmission, isFetchingDetail } = useSelector((state) => state.submission);
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [submissionToDelete, setSubmissionToDelete] = useState(null);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [verdictFilter, setVerdictFilter] = useState(''); 
+    const [currentPage, setCurrentPage] = useState(1);
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
     useEffect(() => {
@@ -32,14 +37,28 @@ function AdminSubmissionsPage() {
     }, [debouncedSearchQuery, verdictFilter, dispatch]);
     
     useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchQuery, verdictFilter]);
+
+    useEffect(() => {
         return () => {
             dispatch(reset());
         };
     }, [dispatch]);
 
+    const handleViewClick = (submissionId) => {
+        dispatch(getSubmissionDetail(submissionId));
+        setIsViewModalOpen(true);
+    };
+
+    const closeViewModal = () => {
+        setIsViewModalOpen(false);
+        dispatch(resetSelected());
+    };
+
     const handleDeleteClick = (id) => {
         setSubmissionToDelete(id);
-        setIsModalOpen(true);
+        setIsDeleteModalOpen(true);
     };
 
     const handleConfirmDelete = () => {
@@ -52,17 +71,22 @@ function AdminSubmissionsPage() {
                 }
             });
         }
-        closeModal();
+        closeDeleteModal();
     };
     
-    const closeModal = () => {
-        setIsModalOpen(false);
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
         setSubmissionToDelete(null);
     };
 
     if (isFetchingAll && !allSubmissions.length) {
         return <Loader />;
     }
+
+    const totalPages = Math.ceil(allSubmissions.length / SUBMISSIONS_PER_PAGE);
+    const startIndex = (currentPage - 1) * SUBMISSIONS_PER_PAGE;
+    const endIndex = startIndex + SUBMISSIONS_PER_PAGE;
+    const currentSubmissions = allSubmissions.slice(startIndex, endIndex);
 
     const getVerdictColor = (verdict) => {
         switch (verdict) {
@@ -125,7 +149,7 @@ function AdminSubmissionsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-color">
-                            {allSubmissions.map(sub => (
+                            {currentSubmissions.map(sub => (
                                 <tr key={sub._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">{sub.userId?.name || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
@@ -135,7 +159,8 @@ function AdminSubmissionsPage() {
                                     </td>
                                     <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getVerdictColor(sub.verdict)}`}>{sub.verdict}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">{new Date(sub.submittedAt).toLocaleString()}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
+                                        <button onClick={() => handleViewClick(sub._id)} className="text-accent hover:text-accent-hover">View</button>
                                         <button onClick={() => handleDeleteClick(sub._id)} className="text-red-500 hover:text-red-400" disabled={isDeleting}>
                                             Delete
                                         </button>
@@ -150,15 +175,43 @@ function AdminSubmissionsPage() {
                         No submissions found matching your filters.
                     </div>
                 )}
+                
+                {totalPages > 1 && (
+                    <div className="mt-6 flex justify-between items-center text-sm">
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-text-secondary">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
             
             <ConfirmationModal
-                isOpen={isModalOpen}
-                onClose={closeModal}
+                isOpen={isDeleteModalOpen}
+                onClose={closeDeleteModal}
                 onConfirm={handleConfirmDelete}
                 title="Confirm Deletion"
                 message="Are you sure you want to delete this submission? This will also remove the source code from storage. This action is permanent and cannot be undone."
                 confirmText="Delete"
+            />
+            <AdminSubmissionViewModal
+                isOpen={isViewModalOpen}
+                onClose={closeViewModal}
+                submission={selectedSubmission}
+                isFetchingDetail={isFetchingDetail}
             />
         </>
     );

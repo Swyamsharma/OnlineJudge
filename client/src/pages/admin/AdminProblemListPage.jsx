@@ -8,6 +8,8 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import { VscSearch, VscCheck } from 'react-icons/vsc';
 import FilterPopover from '../../components/FilterPopover';
 
+const PROBLEMS_PER_PAGE = 15;
+
 function AdminProblemListPage() {
     const dispatch = useDispatch();
     const { problems, isLoading } = useSelector((state) => state.problem);
@@ -17,6 +19,7 @@ function AdminProblemListPage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedDifficulties, setSelectedDifficulties] = useState(new Set());
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         dispatch(getProblems());
@@ -25,11 +28,20 @@ function AdminProblemListPage() {
         };
     }, [dispatch]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedDifficulties]);
+
     const filteredProblems = useMemo(() => {
         return problems
             .filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
             .filter(p => selectedDifficulties.size === 0 || selectedDifficulties.has(p.difficulty));
     }, [problems, searchQuery, selectedDifficulties]);
+
+    const totalPages = Math.ceil(filteredProblems.length / PROBLEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * PROBLEMS_PER_PAGE;
+    const endIndex = startIndex + PROBLEMS_PER_PAGE;
+    const currentProblems = filteredProblems.slice(startIndex, endIndex);
     
     const handleDifficultyToggle = (difficulty) => {
         const newSet = new Set(selectedDifficulties);
@@ -112,7 +124,7 @@ function AdminProblemListPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-color">
-                            {filteredProblems.map(problem => (
+                            {currentProblems.map(problem => (
                                 <tr key={problem._id} className="hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">{problem.title}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -130,6 +142,28 @@ function AdminProblemListPage() {
                         <div className="text-center py-10 text-text-secondary">No problems found.</div>
                     )}
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="mt-6 flex justify-between items-center text-sm">
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-text-secondary">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-md bg-secondary hover:bg-slate-700/50 text-text-primary border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
             
             <ConfirmationModal
