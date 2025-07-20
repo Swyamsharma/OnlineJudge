@@ -61,11 +61,11 @@ export default function ProblemDetailPage() {
     }, [language, problemId, getLocalStorageKey]);
 
     useEffect(() => {
-        if (debouncedCode && debouncedCode !== defaultCode[language]) {
-            const key = getLocalStorageKey(language);
-            localStorage.setItem(key, debouncedCode);
+        if (debouncedCode) {
+             const key = getLocalStorageKey(language);
+             localStorage.setItem(key, debouncedCode);
         }
-    }, [debouncedCode, language, getLocalStorageKey]);
+    }, [debouncedCode]);
 
 
     useEffect(() => {
