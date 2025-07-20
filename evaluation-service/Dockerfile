@@ -15,4 +15,4 @@ COPY . .
 RUN apk add --no-cache docker-cli
 
 # Use nodemon to run the app
-CMD ["npx", "nodemon", "index.js"]
+CMD ["node", "index.js"]
