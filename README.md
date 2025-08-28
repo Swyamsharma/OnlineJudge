@@ -4,7 +4,7 @@ This repository contains the source code for a modern, full-stack Online Judge p
 
 ---
 
-### **Live:** [**https://www.swyamsharma.me/**](https://www.swyamsharma.me/)
+### **Live:** [**https://www.swyamsharma.me/**](https://www.swyamsharma.me/) (Currently stopped the instance to save costs)
 
 ---
 
